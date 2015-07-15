@@ -36,58 +36,6 @@ tau_d = 100.
 simtime = 0
 
 
-def build_network():
-    """
-    Create NEST Network with 18 receptors, 10 neurons and spik
-    detectors. Establish connections with random initial weights between
-    all nodes.
-    """
-
-    if model == 'mat':
-        neuron_params = {'E_L': 0.0, 'V_m': 0.0, 'tau_m': 4.0, 'C_m': 10.0,
-                         'tau_syn_ex': 3.0, 'tau_syn_in': 3.0, 'omega': 0.1,
-                         'alpha_1': 1.0, 'alpha_2': 0.0,
-                         't_ref': 0.1, 'tau_1': 4.0}
-        # 10 mat neurons
-        neurons = nest.Create('mat2_psc_exp', 10, neuron_params)
-    else:
-        neuron_params = {'V_m': 0.0, 'E_L': 0.0, 'C_m': 50.0, 'tau_m': 4.0,
-                         't_ref': np.random.uniform(0.1, 2), 'V_th': 0.1,
-                         'V_reset': np.random.uniform(0, -1), 'tau_syn': 10.0}
-        neurons = nest.Create('iaf_neuron', 10, neuron_params)
-
-    # 18 poisson generators representing neural receptors
-    receptors = nest.Create('spike_generator', 18)
-
-    neuron_spike_detectors = nest.Create('spike_detector', 10)
-    receptor_spike_detectors = nest.Create('spike_detector', 18)
-
-    population_spikes = nest.Create('spike_detector', 2,
-                                    [{'label': 'receptors'},
-                                     {'label': 'neurons'}])
-
-    nest.CopyModel('static_synapse', 'e', {'delay': 2.0, 'weight': 1.0})
-    nest.CopyModel('static_synapse', 'syn', {'delay': 2.0})
-
-    nest.Connect(receptors, population_spikes[:1], syn_spec='syn')
-    nest.Connect(neurons, population_spikes[1:])
-
-    for i in range(len(neurons)):
-        nest.Connect(neurons[i], neuron_spike_detectors[i])
-    for i in range(len(receptors)):
-        nest.Connect(receptors[i], receptor_spike_detectors[i], 'syn')
-
-    nest.Connect(receptors, neurons, {'rule': 'all_to_all'},
-                 {'model': 'syn', 'weight': {'distribution': 'uniform',
-                                             'low': 0.0, 'high': 1.5}})
-    nest.Connect(neurons, neurons, {'rule': 'all_to_all'},
-                 {'model': 'syn', 'weight': {'distribution': 'uniform',
-                                             'low': -1.5, 'high': 1.5}})
-
-    return neurons, neuron_spike_detectors, receptors,\
-        receptor_spike_detectors, population_spikes
-
-
 def build_small_network():
     """
     Create test network with one neuron and one receptor.
@@ -524,7 +472,8 @@ if __name__ == '__main__':
     fitness, rewards, weights = [], [], []
     fitness.append(0)
     rewards.append(0)
-    nrns, nrns_sd, rctrs, rctrs_sd, pop_spikes = build_network()
+    nrns, nrns_sd, rctrs, rctrs_sd, pop_spikes = \
+                                network.create_learning_network(model)
 
     for i in range(50):
         weights.append(get_weights(rctrs, nrns))

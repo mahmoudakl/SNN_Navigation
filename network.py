@@ -32,18 +32,7 @@ def create_evolutionary_network(genetic_string, model):
     global neurons, receptors, voltmeters, receptor_spikes,\
     neurons_spikes, motor_spikes
 
-    if model == 'mat':
-        neuron_params = {'E_L': 0.0, 'V_m': 0.0, 'tau_m': 4.0, 'C_m': 10.0,
-                         'tau_syn_ex': 3.0, 'tau_syn_in': 3.0, 'omega': 0.1,
-                         'alpha_1': 1.0, 'alpha_2': 0.0,
-                         't_ref': 0.1, 'tau_1': 4.0}
-        # 10 mat neurons
-        neurons = nest.Create('mat2_psc_exp', 10, neuron_params)
-    else:
-        neuron_params = {'V_m': 0.0, 'E_L': 0.0, 'C_m': 10.0, 'tau_m': 4.0,
-                         't_ref': 1.0, 'V_th': 0.1,
-                         'V_reset': -0.1, 'tau_syn': 1.0}
-        neurons = nest.Create('iaf_neuron', 10, neuron_params)
+    neurons = create_neurons(model)
 
     # The last 4 neurons are the ones used to set wheel speeds'
     motor_neurons = neurons[6:]
@@ -100,6 +89,74 @@ def create_evolutionary_network(genetic_string, model):
                 nest.Connect(receptors[source-11], neurons[target],
                              syn_spec='e')
     return motor_spikes
+
+
+def create_learning_network(model, w_low, w_high):
+    """
+    Create NEST Network with 18 receptors, 10 neurons and spik
+    detectors. Establish connections with random initial weights between
+    all nodes.
+
+    @param model: Neuronal model.
+    @param w_low: Low weight range value.
+    @param w_high: High weight range value.
+    """
+
+    neurons = create_neurons(model)
+
+    # 18 poisson generators representing neural receptors
+    receptors = nest.Create('spike_generator', 18)
+
+    neuron_spike_detectors = nest.Create('spike_detector', 10)
+    receptor_spike_detectors = nest.Create('spike_detector', 18)
+
+    population_spikes = nest.Create('spike_detector', 2,
+                                    [{'label': 'receptors'},
+                                     {'label': 'neurons'}])
+
+    nest.CopyModel('static_synapse', 'e', {'delay': 2.0, 'weight': 1.0})
+    nest.CopyModel('static_synapse', 'syn', {'delay': 2.0})
+
+    nest.Connect(receptors, population_spikes[:1], syn_spec='syn')
+    nest.Connect(neurons, population_spikes[1:])
+
+    for i in range(len(neurons)):
+        nest.Connect(neurons[i], neuron_spike_detectors[i])
+    for i in range(len(receptors)):
+        nest.Connect(receptors[i], receptor_spike_detectors[i], 'syn')
+
+    nest.Connect(receptors, neurons, {'rule': 'all_to_all'},
+                 {'model': 'syn', 'weight': {'distribution': 'uniform',
+                                             'low': 0.0, 'high': w_high}})
+    nest.Connect(neurons, neurons, {'rule': 'all_to_all'},
+                 {'model': 'syn', 'weight': {'distribution': 'uniform',
+                                             'low': w_low, 'high': w_high}})
+
+    return neurons, neuron_spike_detectors, receptors,\
+            receptor_spike_detectors, population_spikes
+
+
+def create_neurons(model):
+    """
+    Create 10 neurons based on the neuronal model.
+
+    @param model: Neuronal model.
+    """
+
+    if model == 'mat':
+        neuron_params = {'E_L': 0.0, 'V_m': 0.0, 'tau_m': 4.0, 'C_m': 10.0,
+                         'tau_syn_ex': 3.0, 'tau_syn_in': 3.0, 'omega': 0.1,
+                         'alpha_1': 1.0, 'alpha_2': 0.0,
+                         't_ref': 0.1, 'tau_1': 4.0}
+        # 10 mat neurons
+        neurons = nest.Create('mat2_psc_exp', 10, neuron_params)
+    else:
+        neuron_params = {'V_m': 0.0, 'E_L': 0.0, 'C_m': 50.0, 'tau_m': 4.0,
+                         't_ref': np.random.uniform(0.1, 2), 'V_th': 0.1,
+                         'V_reset': np.random.uniform(0, -1), 'tau_syn': 10.0}
+        neurons = nest.Create('iaf_neuron', 10, neuron_params)
+
+    return neurons
 
 
 def set_receptors_firing_rate(x, y, theta, err_l, err_r):
