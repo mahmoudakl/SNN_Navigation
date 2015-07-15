@@ -3,19 +3,109 @@
 Created on Mon Apr  6 15:14:02 2015
 
 @author: akl
-"""
 
+This module is responsible for building a Spiking Neural Network with
+NEST according to an evolutionary  approach and a learning approach.
+It also includes function that extract and update network data, e.g.
+spike times and firing rates.
+"""
 import numpy as np
-import nest
-import environment as env
-import evolution as ev
 import random
+
+import nest
+
+import environment as env
+
+neurons, receptors = [], []
+receptor_spikes, neurons_spikes, motor_spikes, voltmeters = [], [], [], []
+
+
+def create_evolutionary_network(genetic_string, model):
+    """
+    Create neural network based on the encoded topology in the genetic
+    string.
+
+    @param genetic_string: Binary string encoding synaptic connections.
+    @param neuronal_model: Neuronal model for the 10 neurons.
+    """
+
+    global neurons, receptors, voltmeters, receptor_spikes,\
+    neurons_spikes, motor_spikes
+
+    if model == 'mat':
+        neuron_params = {'E_L': 0.0, 'V_m': 0.0, 'tau_m': 4.0, 'C_m': 10.0,
+                         'tau_syn_ex': 3.0, 'tau_syn_in': 3.0, 'omega': 0.1,
+                         'alpha_1': 1.0, 'alpha_2': 0.0,
+                         't_ref': 0.1, 'tau_1': 4.0}
+        # 10 mat neurons
+        neurons = nest.Create('mat2_psc_exp', 10, neuron_params)
+    else:
+        neuron_params = {'V_m': 0.0, 'E_L': 0.0, 'C_m': 10.0, 'tau_m': 4.0,
+                         't_ref': 1.0, 'V_th': 0.1,
+                         'V_reset': -0.1, 'tau_syn': 1.0}
+        neurons = nest.Create('iaf_neuron', 10, neuron_params)
+
+    # The last 4 neurons are the ones used to set wheel speeds'
+    motor_neurons = neurons[6:]
+
+    # 18 poisson generators representing neural receptors
+    receptors = nest.Create('spike_generator', 18)
+
+    # Spike detetctors for receptors and neurons for testing purposes.
+    population_spikes = nest.Create('spike_detector', 2,
+                                    [{'label': 'receptors'},
+                                     {'label': 'neurons'}])
+    receptor_spikes = population_spikes[:1]
+    neurons_spikes = population_spikes[1:]
+
+    # Four spike detectors for the motor neurons
+    motor_spikes = nest.Create('spike_detector', 4,
+                                        [{'label': 'left_wheel_forward'},
+                                        {'label': 'left_wheel_backward'},
+                                        {'label': 'right_wheel_forward'},
+                                        {'label': 'right_wheel_backward'}])
+
+    # Four voltmeters to plot motor neuron's voltage trace
+    voltmeters = nest.Create('voltmeter', 4, {'withgid': True})
+
+    # Setting the excitatory synapse model parameters
+    nest.CopyModel('static_synapse', 'e', {'weight': 1.0, 'delay': 2.0})
+    # Setting the inhibitory synapse model parameters
+    nest.CopyModel('static_synapse', 'i', {'weight': -1.0, 'delay': 2.0})
+
+    # Connect spike detectors to neurons and neural receptors
+    nest.Connect(receptors, receptor_spikes, syn_spec='e')
+    nest.Connect(neurons, neurons_spikes)
+
+    # Connect spike detectors and voltmeters to motor neurons
+    for i in range(len(motor_neurons)):
+        nest.Connect(motor_neurons[i], motor_spikes[i])
+        nest.Connect(voltmeters[i], motor_neurons[i])
+
+    # Set Synaptic properties of the 10 neurons
+    neuron_synapses = genetic_string[:, 0]
+
+    # Establish Connections between neurons according to genetic string
+    for target in range(len(genetic_string)):
+        for source in range(1, 11):
+            if genetic_string[target][source]:
+                synapse = ('e' if neuron_synapses[source-1] else 'i')
+                nest.Connect(neurons[source-1], neurons[target],
+                             syn_spec=synapse)
+
+    # Establish Connections between receptors and neurons based on
+    # genetic string.
+        for source in range(11, 29):
+            if genetic_string[target][source]:
+                nest.Connect(receptors[source-11], neurons[target],
+                             syn_spec='e')
+    return motor_spikes
 
 
 def set_receptors_firing_rate(x, y, theta, err_l, err_r):
     """
     Set the firing rate of the 18 neural receptors according to the
-    robot's current view.
+    robot's current view and the error in wheel speeds.
 
     @param x: Robot's current x position.
     @param y: Robot's current y position.
@@ -60,6 +150,22 @@ def set_receptors_firing_rate(x, y, theta, err_l, err_r):
                        {'spike_times': [simtime + 1]})
 
     return px
+
+
+def update_refratory_perioud(model='mat'):
+    """
+    Multiply the constant value of the refractory period by a uniformly
+    random variable in the range [0, 1].
+    """
+
+    if model == 'mat':
+        for i in range(1, 11):
+            nest.SetStatus([i], {'alpha_1': np.random.uniform(0, 1),
+                                 't_ref': np.random.uniform(0.1, 1)})
+    else:
+        for i in range(1, 11):
+            nest.SetStatus([i], {'V_reset': np.random.uniform(0, -0.1),
+                                 't_ref': np.random.uniform(0.1, 1)})
 
 
 def add_noise_to_pixels(p):
@@ -132,6 +238,20 @@ def get_neuron_firing_rate(events):
     return firing_rate
 
 
+def get_average_spikes_per_second():
+    """
+    Get the avergae number of spikes per seond for each one of the 10
+    neurons from the spike detector data
+    """
+
+    spikes = []
+    spike_senders = nest.GetStatus(ev.neurons_spikes, 'events')[0]['senders']
+    for i in range(1, 11):
+        spikes.append(len(spike_senders[spike_senders == i])/40)
+
+    return spikes
+
+
 def get_motor_neurons_firing_rates(motor_spikes):
     """
     Get the firing rates of the four motor neurons, calculated over the
@@ -157,6 +277,20 @@ def get_motor_neurons_firing_rates(motor_spikes):
     firing_rates = (left_fwd_fr, left_bwd_fr, right_fwd_fr, right_bwd_fr)
 
     return firing_rates
+
+
+def get_voltmeter_data():
+    """
+    Extract data from voltmeters.
+    """
+
+    voltmeter_data = []
+    for v in ev.voltmeters:
+        vm = nest.GetStatus([v], 'events')[0]
+        V, t = vm['V_m'], vm['times']
+        voltmeter_data.append((V, t))
+
+    return voltmeter_data
 
 
 def get_wheel_speeds(motor_firing_rates):

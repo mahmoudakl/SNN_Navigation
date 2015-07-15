@@ -27,22 +27,6 @@ model = 'mat'
 init = 'random'
 
 
-def normalize_fitness(fitness):
-    """
-    Scale the average fitness values from all populations and from all
-    generations in the range [0, 1].
-
-    @param fitness: avergae fitness values from all evloved generations.
-    """
-
-    normalized_fitness = []
-    for f in fitness:
-        f = [i/80. for i in f]
-        normalized_fitness.append(f)
-
-    return normalized_fitness
-
-
 def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates):
     """
     Update the left and right wheel speeds and calculate the linear and
@@ -67,24 +51,9 @@ def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates):
     return v_l_act, v_r_act, v_t, w_t, 1 - r1, 1 - r2, collision, v_l, v_r
 
 
-def get_average_spikes_per_second():
-    """
-    Get the avergae number of spikes per seond for each one of the 10
-    neurons from the spike detector data
-    """
-
-    spikes = []
-    spike_senders = nest.GetStatus(ev.neurons_spikes, 'events')[0]['senders']
-    for i in range(1, 11):
-        spikes.append(len(spike_senders[spike_senders == i])/40)
-
-    return spikes
-
-
 def create_empty_data_lists():
     """
-    Create dict of empty lists to store simulation data in.
-    """
+    Create dict of empty lists to store simulation data in."""
 
     data = [[] for _ in range(12)]
 
@@ -93,20 +62,6 @@ def create_empty_data_lists():
             'linear_velocity_log': data[5], 'angular_velocity_log': data[6],
             'voltmeter_data': data[7], 'rctr_nrn_trace': data[8],
             'nrn_nrn_trace': data[9], 'reward': data[10], 'weights': data[11]}
-
-
-def get_voltmeter_data():
-    """
-    Extract data from voltmeters.
-    """
-
-    voltmeter_data = []
-    for v in ev.voltmeters:
-        vm = nest.GetStatus([v], 'events')[0]
-        V, t = vm['V_m'], vm['times']
-        voltmeter_data.append((V, t))
-
-    return voltmeter_data
 
 
 def simulate(individual, reset=True):
@@ -187,10 +142,10 @@ def simulate(individual, reset=True):
     simdata['fitness'] = ev.get_fitness_value(simdata['speed_log'])
 
     # Get average number of spikes per second for each neuron
-    simdata['average_spikes'] = get_average_spikes_per_second()
+    simdata['average_spikes'] = network.get_average_spikes_per_second()
 
     # Get Voltmeter data
-    simdata['voltmeter_data'] = get_voltmeter_data()
+    simdata['voltmeter_data'] = network.get_voltmeter_data()
 
     if reset:
         nest.ResetKernel()

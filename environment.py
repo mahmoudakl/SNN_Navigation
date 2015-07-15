@@ -21,7 +21,6 @@ Controllers for Autonomous Vision-based Robots.
  ---------------------
 
 """
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -509,6 +508,7 @@ def get_angular_velocity(v_l, v_r, v_t, L=55):
         # Instantaneous curvature radius of the robot trajectory,
         # relative to the midpoint axis.
         R = (L/2.)*((v_l + v_r)/float(v_l - v_r))
+
         # Angular velocity of the robot
         w_t = -v_t/float(R)
 
@@ -648,7 +648,8 @@ def get_view(x, y, intersect_l, intersect_r, view_proportion):
         view_r_angles = get_stripes_angle(view_r_tuples, x, y, crl, wall_right)
         if view_l_tuples == [] or view_m_tuples == []or view_r_tuples == []:
             print intersect_l, intersect_r, view_proportion
-        if len(view_l_angles) == 0 or len(view_m_angles) == 0 or len(view_r_angles) == 0:
+        if len(view_l_angles) == 0 or len(view_m_angles) == 0 or \
+                                                len(view_r_angles) == 0:
             print x, y, intersect_l, intersect_r, view_proportion 
         view_l = get_photoreceptors_values(view_l_angles, receptors_l)
         view_m = get_photoreceptors_values(view_m_angles, receptors_m)
@@ -861,5 +862,6 @@ def proximity_to_wall(x, y):
     horizontal_dist = x if x < (x_max - x) else (x_max - x)
     vertical_dist = y if y < (y_max - y) else (y_max - y)
 
-    dist =  horizontal_dist if horizontal_dist < vertical_dist else vertical_dist
+    dist =  horizontal_dist if horizontal_dist < vertical_dist else \
+            vertical_dist
     return dist
