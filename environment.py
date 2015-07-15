@@ -521,6 +521,9 @@ def get_angular_velocity(v_l, v_r, v_t, L=55):
 
 def fix_boundary_condition(coord):
     """
+    Helper function tht adds 1mm offset at boundaries.
+
+    @param coord: Wall coordinate.
     """
         
     if coord in (0, 1):
@@ -861,6 +864,11 @@ def same_sign(x, y):
 
 def proximity_to_wall(x, y):
     """
+    Determine the closest distance to a wall based on the current
+    position.
+
+    @param x: Current x-position.
+    @param y: Current y-position.
     """
 
     horizontal_dist = x if x < (x_max - x) else (x_max - x)

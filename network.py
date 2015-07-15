@@ -154,8 +154,10 @@ def set_receptors_firing_rate(x, y, theta, err_l, err_r):
 
 def update_refratory_perioud(model):
     """
-    Multiply the constant value of the refractory period by a uniformly
-    random variable in the range [0, 1].
+    Add noise to the refractory function of the corresponding neuronal
+    model used in the network.
+
+    @param model: Neuronal model used in the network.
     """
 
     if model == 'mat':
@@ -172,7 +174,7 @@ def add_noise_to_pixels(p):
     """
     Add uniformly distributed noise to pixel values.
 
-    @param px: List of pixel values.
+    @param p: List of pixel values.
     """
 
     for i in range(len(p)):
@@ -256,6 +258,9 @@ def get_motor_neurons_firing_rates(motor_spikes):
     """
     Get the firing rates of the four motor neurons, calculated over the
     last 20 ms.
+
+    @param motor_spikes: List of global identifiers of spike detectors
+                        connected to the motor neurons.
     """
 
     spikes_left_fwd = motor_spikes[:1]
@@ -280,9 +285,7 @@ def get_motor_neurons_firing_rates(motor_spikes):
 
 
 def get_voltmeter_data():
-    """
-    Extract data from voltmeters.
-    """
+    """Extract data from voltmeters."""
 
     voltmeter_data = []
     for v in voltmeters:
@@ -297,6 +300,8 @@ def get_wheel_speeds(motor_firing_rates):
     """
     Get the speed of the left and right wheels based on spiking activity
     in the motor neurons.
+
+    @param motor_firing_rates: Firing rates of the motor neurons.
     """
 
     left_fwd_fr = motor_firing_rates[0]

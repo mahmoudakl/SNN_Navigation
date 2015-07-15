@@ -10,18 +10,7 @@ Created on Mon Apr  6 15:07:05 2015
 import numpy as np
 
 pop_id = 1
-
 model = ''
-
-
-def generate_population():
-    """
-    Generate Initial population of 60 individuals.
-    """
-
-    population = np.random.randint(2, size=(60, 10, 29))
-
-    return population
 
 
 def load_population():

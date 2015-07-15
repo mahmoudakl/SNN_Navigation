@@ -39,6 +39,7 @@ def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates):
     @param x_cur: Robot's current x position.
     @param y_cur: Robot's current y position.
     @param theta_cur: Robot's current orientation.
+    @param motor_firing_rates: Firing rates of the motor neurons.
     """
 
     v_l, v_r = network.get_wheel_speeds(motor_firing_rates)

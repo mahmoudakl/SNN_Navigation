@@ -226,6 +226,9 @@ def get_weights(receptors, neurons):
     """
     Get current synaptic weights of synapses connecting receptors to
     neurons and neurons to neurons.
+
+    @param receptors: List of global identifiers of the 18 receptors.
+    @param neurons: List of global identifiers of the 10 neurons.
     """
 
     conns = nest.GetConnections(source=receptors+neurons, target=neurons)
@@ -287,6 +290,11 @@ def get_spike_times(nrns_sd, rctrs_sd):
     """
     Extract spike times for receptors and neurons from the spike
     detecotrs.
+
+    @param nrns_sd: List of global identifiers of spike detectors
+                    connected to the 10 neurons.
+    @param rctrs_sd: List of global identifiers of spike detectors
+                    connected to the 18 receptors.
     """
 
     nrns_st, rctrs_st = [], []
@@ -344,6 +352,16 @@ def get_eligibility_trace(nrns_st, rctrs_st, simtime, rec_nrn_tags,
     """
     Get the current value of the eligibility trace for all synapses in
     the network based on the spike trains.
+
+    @param nrns_st: 2D array of spike times for the 10 neurons.
+    @param rctrs_st: 2D array of spike times for the 18 receptors.
+    @param simtime: Elapsed simulation time.
+    @param rec_nrn_tags: 2D array comprising the values of the
+                        eligibility trace for the connections between
+                        receptors and neurons.
+    @param nrn_nrn_tags: 2D array comprising the values of the
+                        eligibility trace for the connections between
+                        neurons and neurons.
     """
 
     rctr_times, nrn_times, nrn_prev_times = [], [], []
