@@ -152,7 +152,7 @@ def set_receptors_firing_rate(x, y, theta, err_l, err_r):
     return px
 
 
-def update_refratory_perioud(model='mat'):
+def update_refratory_perioud(model):
     """
     Multiply the constant value of the refractory period by a uniformly
     random variable in the range [0, 1].
@@ -245,7 +245,7 @@ def get_average_spikes_per_second():
     """
 
     spikes = []
-    spike_senders = nest.GetStatus(ev.neurons_spikes, 'events')[0]['senders']
+    spike_senders = nest.GetStatus(neurons_spikes, 'events')[0]['senders']
     for i in range(1, 11):
         spikes.append(len(spike_senders[spike_senders == i])/40)
 
@@ -285,7 +285,7 @@ def get_voltmeter_data():
     """
 
     voltmeter_data = []
-    for v in ev.voltmeters:
+    for v in voltmeters:
         vm = nest.GetStatus([v], 'events')[0]
         V, t = vm['V_m'], vm['times']
         voltmeter_data.append((V, t))

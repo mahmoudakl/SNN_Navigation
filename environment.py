@@ -35,7 +35,7 @@ wall4 = wall_images['arr_3']
 
 wall_dict = {1: wall1, 2: wall2, 3: wall3, 4: wall4}
 
-# Box dimensions
+# Arena dimensions
 x_max = len(wall1)
 y_max = len(wall2)
 
@@ -315,8 +315,8 @@ def get_angle(adj, opp):
     """
     Calculate triangle angle given two sides.
 
-    @param x: Adjacent side
-    @param y: Opposite side
+    @param adj: Adjacent side
+    @param opp: Opposite side
     """
 
     tan_angle = opp/float(adj)
@@ -346,6 +346,7 @@ def get_walls_view_ratio(il, ir, x, y, theta):
 
     wall_left = il[0]
     wall_right = ir[0]
+
     # View border angles
     theta_1 = theta + np.deg2rad(18)
     theta_2 = abs(theta - np.deg2rad(18))
@@ -409,7 +410,7 @@ def get_walls_view_ratio(il, ir, x, y, theta):
                 1 - (wall_left_proportion + wall_middle_proportion)]
 
 
-def set_wheel_speeds(v_left, v_right, x_cur, y_cur, theta_cur):
+def set_wheel_speeds(v_left, v_right, x_cur, y_cur, theta_cur, t_step):
     """
     Adjust the calculated wheel speeds from the neural network to the
     actual robot based on boundary conditions.
@@ -419,12 +420,14 @@ def set_wheel_speeds(v_left, v_right, x_cur, y_cur, theta_cur):
     @param x_cur: Robot's current x position.
     @param y_cur: Robot's current y position.
     @param theta_cur: Robot's current orientation angle.
+    @param t_step: Simulation time-step.
     """
 
     v_t = get_linear_velocity(v_left, v_right)
     w_t = get_angular_velocity(v_left, v_right, v_t)
     collision = False
-    x_next, y_next, theta_next = move(x_cur, y_cur, theta_cur, v_t, w_t)
+    x_next, y_next, theta_next = move(x_cur, y_cur, theta_cur, v_t, w_t,
+                                      t_step/1000.)
     if x_next < 0 or x_next > x_max:
         x_next = 0 if x_next < 0 else x_max
         v_left= 0
@@ -439,7 +442,7 @@ def set_wheel_speeds(v_left, v_right, x_cur, y_cur, theta_cur):
     return v_left, v_right, collision
 
 
-def move(x_cur, y_cur, theta_cur, v_t, w_t):
+def move(x_cur, y_cur, theta_cur, v_t, w_t, t_step):
     """
     Update robot's current position and orientation based on the linear
     and angular velocities of the robot, and its current position and
@@ -450,6 +453,7 @@ def move(x_cur, y_cur, theta_cur, v_t, w_t):
     @param theta_cur: robot's current orientation.
     @param v_t: robot's current linear velocity in mm/s.
     @param w_t: robot's current angular velocity in mm/s.
+    @param t_step: Simulation time-step.
     """
 
     # Overall robot linear and angular velocities

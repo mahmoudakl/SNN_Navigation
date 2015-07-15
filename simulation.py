@@ -16,7 +16,11 @@ import results
 x_init = 195
 y_init = 165
 theta_init = 1.981011
+
 g = 0
+
+t_step = 100.0
+n_step = 400
 
 # Neuronal model
 model = 'mat'
@@ -44,7 +48,8 @@ def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates):
     v_l_act = v_l*r1
     v_r_act = v_r*r2
     v_l_act, v_r_act, collision = env.set_wheel_speeds(v_l_act, v_r_act, x_cur,
-                                                       y_cur, theta_cur)
+                                                       y_cur, theta_cur,
+                                                       t_step)
     v_t = env.get_linear_velocity(v_l_act, v_r_act)
     w_t = env.get_angular_velocity(v_l_act, v_r_act, v_t)
 
@@ -92,18 +97,18 @@ def simulate(individual, reset=True):
     simdata['y_init'] = y_init
     simdata['theta_init'] = theta_init
 
-    motor_spks = ev.create_network(individual, model)
+    motor_spks = network.create_evolutionary_network(individual, model)
     x_cur = x_init
     y_cur = y_init
     theta_cur = theta_init
     err_l, err_r = 0, 0
 
-    for t in range(400):
+    for t in range(n_step):
         # Save current position in trajectory list
         simdata['traj'].append((x_cur, y_cur))
 
         # Add nioise to
-        ev.update_refratory_perioud()
+        network.update_refratory_perioud(model)
 
         # Set receptors' firing probability
         px = network.set_receptors_firing_rate(x_cur, y_cur, theta_cur,
@@ -111,7 +116,7 @@ def simulate(individual, reset=True):
         simdata['pixel_values'].append(px)
 
         # Run simulation for 100 ms
-        nest.Simulate(100)
+        nest.Simulate(t_step)
 
         motor_firing_rates = network.get_motor_neurons_firing_rates(motor_spks)
 
@@ -124,19 +129,16 @@ def simulate(individual, reset=True):
             simdata['speed_log'].extend((0, 0) for k in range(t, 400))
             break
 
-        # Save dsired and actual speeds
+        # Save simulation data
         simdata['speed_log'].append((v_l_act, v_r_act))
         simdata['desired_speed_log'].append((v_l_des, v_r_des))
-
-        # Save motor neurons firing rates
         simdata['motor_fr'].append(motor_firing_rates)
-
-        # Save linear and angualr velocities
         simdata['linear_velocity_log'].append(v_t)
         simdata['angular_velocity_log'].append(w_t)
 
         # Move robot according to the read-out speeds from motor neurons
-        x_cur, y_cur, theta_cur = env.move(x_cur, y_cur, theta_cur, v_t, w_t)
+        x_cur, y_cur, theta_cur = env.move(x_cur, y_cur, theta_cur, v_t, w_t,
+                                           t_step/1000.)
 
     # Calculate individual's fitness value
     simdata['fitness'] = ev.get_fitness_value(simdata['speed_log'])
