@@ -7,10 +7,12 @@ Created on Tue Apr 21 22:50:49 2015
 
 import nest
 import numpy as np
-import environment as env
+
+import arena
 import evolution as ev
 import network
 import results
+import motion
 
 
 x_init = 195
@@ -29,32 +31,6 @@ model = 'mat'
 # Initial Pose
 #init = 'fixed'
 init = 'random'
-
-
-def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates):
-    """
-    Update the left and right wheel speeds and calculate the linear and
-    angular speeds of the robot.
-
-    @param x_cur: Robot's current x position.
-    @param y_cur: Robot's current y position.
-    @param theta_cur: Robot's current orientation.
-    @param motor_firing_rates: Firing rates of the motor neurons.
-    """
-
-    v_l, v_r = network.get_wheel_speeds(motor_firing_rates)
-    r1, r2 = np.random.uniform(0.7, 1, 2)
-    # get actual speeds by multiplyin the desired speeds with uniform
-    # random variables
-    v_l_act = v_l*r1
-    v_r_act = v_r*r2
-    v_l_act, v_r_act, collision = env.set_wheel_speeds(v_l_act, v_r_act, x_cur,
-                                                       y_cur, theta_cur,
-                                                       t_step)
-    v_t = env.get_linear_velocity(v_l_act, v_r_act)
-    w_t = env.get_angular_velocity(v_l_act, v_r_act, v_t)
-
-    return v_l_act, v_r_act, v_t, w_t, 1 - r1, 1 - r2, collision, v_l, v_r
 
 
 def create_empty_data_lists():
@@ -89,8 +65,8 @@ def simulate(individual, reset=True):
     nest.set_verbosity('M_ERROR')
 
     if init == 'random':
-        x_init = np.random.randint(1, env.x_max - 1)
-        y_init = np.random.randint(1, env.y_max - 1)
+        x_init = np.random.randint(1, arena.x_max - 1)
+        y_init = np.random.randint(1, arena.y_max - 1)
         theta_init = np.pi*np.random.rand()
 
     simdata = create_empty_data_lists()
@@ -122,8 +98,8 @@ def simulate(individual, reset=True):
         motor_firing_rates = network.get_motor_neurons_firing_rates(motor_spks)
 
         # Get desired and actual speeds
-        v_l_act, v_r_act, v_t, w_t, err_l, err_r, col, v_l_des, v_r_des = \
-            update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates)
+        col, speed_dict = motion.update_wheel_speeds(x_cur, y_cur, theta_cur,
+                                                 motor_firing_rates, t_step)
 
         # Stop simulation if collision occurs
         if col:
@@ -131,15 +107,17 @@ def simulate(individual, reset=True):
             break
 
         # Save simulation data
-        simdata['speed_log'].append((v_l_act, v_r_act))
-        simdata['desired_speed_log'].append((v_l_des, v_r_des))
+        simdata['speed_log'].append((speed_dict['actual_left'],
+                                     speed_dict['actual_right']))
+        simdata['desired_speed_log'].append((speed_dict['desired_left'],
+                                             speed_dict['desired_right']))
         simdata['motor_fr'].append(motor_firing_rates)
-        simdata['linear_velocity_log'].append(v_t)
-        simdata['angular_velocity_log'].append(w_t)
+        simdata['linear_velocity_log'].append(speed_dict['linear'])
+        simdata['angular_velocity_log'].append(speed_dict['angular'])
 
         # Move robot according to the read-out speeds from motor neurons
-        x_cur, y_cur, theta_cur = env.move(x_cur, y_cur, theta_cur, v_t, w_t,
-                                           t_step/1000.)
+        x_cur, y_cur, theta_cur = motion.move(x_cur, y_cur, theta_cur,
+                    speed_dict['linear'], speed_dict['angular'], t_step/1000.)
 
     # Calculate individual's fitness value
     simdata['fitness'] = ev.get_fitness_value(simdata['speed_log'])
@@ -187,7 +165,7 @@ if __name__ == '__main__':
     generations = 30
     average_fitness, average_connectivity, best_of_generation = [], [], []
     elite = [0, 0]
-    results.set_results_path(init, model, env.arena, ev.pop_id)
+    results.set_results_path(init, model, arena.arena, ev.pop_id)
     print results.path
 
     for gen in range(generations):

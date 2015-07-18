@@ -10,11 +10,10 @@ It also includes function that extract and update network data, e.g.
 spike times and firing rates.
 """
 import numpy as np
-import random
 
 import nest
 
-import environment as env
+import vision
 
 neurons, receptors = [], []
 receptor_spikes, neurons_spikes, motor_spikes, voltmeters = [], [], [], []
@@ -32,13 +31,10 @@ def create_evolutionary_network(genetic_string, model):
     global neurons, receptors, voltmeters, receptor_spikes,\
     neurons_spikes, motor_spikes
 
-    neurons = create_neurons(model)
+    neurons, receptors = create_nodes(model)
 
     # The last 4 neurons are the ones used to set wheel speeds'
     motor_neurons = neurons[6:]
-
-    # 18 poisson generators representing neural receptors
-    receptors = nest.Create('spike_generator', 18)
 
     # Spike detetctors for receptors and neurons for testing purposes.
     population_spikes = nest.Create('spike_detector', 2,
@@ -102,10 +98,7 @@ def create_learning_network(model, w_low, w_high):
     @param w_high: High weight range value.
     """
 
-    neurons = create_neurons(model)
-
-    # 18 poisson generators representing neural receptors
-    receptors = nest.Create('spike_generator', 18)
+    neurons, receptors = create_nodes(model)
 
     neuron_spike_detectors = nest.Create('spike_detector', 10)
     receptor_spike_detectors = nest.Create('spike_detector', 18)
@@ -136,9 +129,9 @@ def create_learning_network(model, w_low, w_high):
             receptor_spike_detectors, population_spikes
 
 
-def create_neurons(model):
+def create_nodes(model):
     """
-    Create 10 neurons based on the neuronal model.
+    Create 18 receptors and 10 neurons based on the neuronal model.
 
     @param model: Neuronal model.
     """
@@ -156,7 +149,10 @@ def create_neurons(model):
                          'V_reset': np.random.uniform(0, -1), 'tau_syn': 10.0}
         neurons = nest.Create('iaf_neuron', 10, neuron_params)
 
-    return neurons
+    # 18 poisson generators representing neural receptors
+    receptors = nest.Create('spike_generator', 18)
+
+    return neurons, receptors
 
 
 def set_receptors_firing_rate(x, y, theta, err_l, err_r):
@@ -173,9 +169,9 @@ def set_receptors_firing_rate(x, y, theta, err_l, err_r):
                     wheel.
     """
 
-    il, ir = env.get_visible_wall_coordinates(x, y, theta)
-    view_proportion = env.get_walls_view_ratio(il, ir, x, y, theta)
-    view = env.get_view(x, y, il, ir, view_proportion)
+    il, ir = vision.get_visible_wall_coordinates(x, y, theta)
+    view_proportion = vision.get_walls_view_ratio(il, ir, x, y, theta)
+    view = vision.get_view(x, y, il, ir, view_proportion)
     if len(view) != 64:
         print len(view), il, ir, view_proportion
 
@@ -184,9 +180,9 @@ def set_receptors_firing_rate(x, y, theta, err_l, err_r):
     while len(px) > 16:
         print len(px)
         px = np.delete(px, -1)
-    px = add_noise_to_pixels(px)
-    px = list(np.abs(laplace_filter(px)))
-    px = scale_list(px)
+    px = vision.add_noise_to_pixels(px)
+    px = list(np.abs(vision.laplace_filter(px)))
+    px = vision.scale_list(px)
 
     simtime = nest.GetKernelStatus()['time']
 
@@ -225,53 +221,6 @@ def update_refratory_perioud(model):
         for i in range(1, 11):
             nest.SetStatus([i], {'V_reset': np.random.uniform(0, -0.1),
                                  't_ref': np.random.uniform(0.1, 1)})
-
-
-def add_noise_to_pixels(p):
-    """
-    Add uniformly distributed noise to pixel values.
-
-    @param p: List of pixel values.
-    """
-
-    for i in range(len(p)):
-        noise = random.randint(0, 50)
-        p[i] = p[i] + noise if p[i] == 0 else p[i] - noise
-    return p
-
-
-def laplace_filter(px):
-    """
-    Implementation of the laplace filter as specified in the paper
-    -0.5 1 -0.5
-
-    @param px: List of pixel values
-    """
-
-    result = []
-    for i in range(len(px)):
-        if i == 0:
-            result.append(px[i] - 0.5*px[i] - 0.5*px[i+1])
-        elif i == len(px) - 1:
-            result.append(px[i] - 0.5*px[i] - 0.5*px[i-1])
-        else:
-            result.append(px[i] - 0.5*px[i-1] - 0.5*px[i+1])
-
-    return result
-
-
-def scale_list(p):
-    """
-    Scale absolute values of a list in the range [0, 1]
-
-    @param p: input list
-    """
-
-    p = list(p)
-    for i in range(len(p)):
-        p[i] = (p[i])/255.
-
-    return p
 
 
 def get_neuron_firing_rate(events):

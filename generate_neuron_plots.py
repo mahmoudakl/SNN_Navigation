@@ -4,14 +4,18 @@ Created on Fri May 29 23:12:06 2015
 
 @author: akl
 """
+import nest
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 plt.rcParams['figure.figsize'] = (12, 4)
 
 def build_network(Ie):
     """
+    Build test network with one neuron and external current input.
+
+    @param Ie: External current magnitude.
     """
 
     nest.ResetKernel()

@@ -4,8 +4,7 @@ Created on Mon Apr  6 15:07:05 2015
 
 @author: akl
 
-
-
+This module contains helper functions for the evolutionary algorithms.
 """
 import numpy as np
 
