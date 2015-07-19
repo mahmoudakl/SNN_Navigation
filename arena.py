@@ -5,8 +5,6 @@ Created on Sat Jul 18 08:38:23 2015
 @author: akl
 """
 import numpy as np
-
-class arena:
     
 
 # Read walls image files
