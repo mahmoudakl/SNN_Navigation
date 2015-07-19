@@ -6,17 +6,39 @@ Created on Sat Jul 18 08:38:23 2015
 """
 import numpy as np
     
+class arena:
+    def __init__(self, arena_id):
+        # Read walls image files
+        self.wall_images = np.load('walls/arena%d.npz' % arena_id)
+        
 
-# Read walls image files
-arena = 1
-wall_images = np.load('walls/arena%d.npz' % arena)
-wall1 = wall_images['arr_0']
-wall2 = wall_images['arr_1']
-wall3 = wall_images['arr_2']
-wall4 = wall_images['arr_3']
+    def wall1(self):
+        """Get the first wall of the arena."""
+        wall1 = self.wall_images['arr_0']
+        return wall1
 
-wall_dict = {1: wall1, 2: wall2, 3: wall3, 4: wall4}
 
-# Arena dimensions
-x_max = len(wall1)
-y_max = len(wall2)
+    def wall2(self):
+        """Get the second wall of the arena."""
+        wall2 = self.wall_images['arr_1']
+        return wall2
+
+
+    def wall3(self):
+        """Get the third wall of the arena."""
+        wall3 = self.wall_images['arr_2']
+        return wall3
+
+
+    def wall4(self):
+        """Get the fourth wall of the arena."""
+        wall4 = self.wall_images['arr_3']
+        return wall4
+
+    def maximum_length(self):
+        """Get the maximum length of the arena. (x-direction)"""
+        return len(self.wall1())
+
+    def maximum_width(self):
+        """Get the maximum width of the arena. (y-direction)"""
+        return len(self.wall2())
