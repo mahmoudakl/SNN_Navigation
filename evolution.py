@@ -8,11 +8,8 @@ This module contains helper functions for the evolutionary algorithms.
 """
 import numpy as np
 
-pop_id = 1
-model = ''
 
-
-def load_population():
+def load_population(pop_id = 1):
     """
     Load population from file and indicate number of available
     individuals.

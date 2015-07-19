@@ -24,13 +24,7 @@ g = 0
 t_step = 100.0
 n_step = 400
 
-# Neuronal model
-model = 'mat'
-#model = 'iaf'
-
-# Initial Pose
-#init = 'fixed'
-init = 'random'
+sim_specs = {}
 
 
 def create_empty_data_lists():
@@ -64,7 +58,7 @@ def simulate(individual, reset=True):
                           'total_num_virtual_procs': 4})
     nest.set_verbosity('M_ERROR')
 
-    if init == 'random':
+    if data['init'] == 'random':
         x_init = np.random.randint(1, arena.x_max - 1)
         y_init = np.random.randint(1, arena.y_max - 1)
         theta_init = np.pi*np.random.rand()
@@ -74,7 +68,7 @@ def simulate(individual, reset=True):
     simdata['y_init'] = y_init
     simdata['theta_init'] = theta_init
 
-    motor_spks = network.create_evolutionary_network(individual, model)
+    motor_spks = network.create_evolutionary_network(individual, data['model'])
     x_cur = x_init
     y_cur = y_init
     theta_cur = theta_init
@@ -85,7 +79,7 @@ def simulate(individual, reset=True):
         simdata['traj'].append((x_cur, y_cur))
 
         # Add nioise to
-        network.update_refratory_perioud(model)
+        network.update_refratory_perioud(data['model'])
 
         # Set receptors' firing probability
         px = network.set_receptors_firing_rate(x_cur, y_cur, theta_cur,
@@ -159,31 +153,66 @@ def plot_results(average_fitness, elite):
     results.plot_average_vs_best_fitness(average_fitness)
 
 
+def get_simulation_details():
+    """Get simulation specifications from the user."""
+
+    data = {}
+    mode = input(">>>Select Mode<<<\n[1] Evolution\n[2] Learning\n")
+    mode = 'evolution' if mode == 1 else 'learning'
+    data['mode'] = mode
+
+    arena = input(">>>Select Arena<<<\n[1] Arena 1 (687x371)\n[2] Arena 2 \
+(500x270)\n[3] Arena 3 (800x432)\n")
+    data['arena'] = arena
+
+    model = input(">>>Select Neuronal Model<<<\n[1] Multi-timescale Adaptive \
+Threshold (MAT)\n[2] Leaky Intergate and Fire (LIF)\n")
+    model = 'mat' if model == 1 else 'iaf'
+    data['model'] = model
+
+    init = input(">>>Select Input Pose<<<\n[1] Random\n[2] Fixed\n")
+    init = 'random' if init == 1 else 'fixed'
+    data['init'] = init
+
+    if mode == 'evolution':
+        # Evolution
+        pop_id = input(">>>Select Population id<<<\n[1] Population 1\n[2] \
+Population 2\n[3] Population 3\n")
+        data['population'] = pop_id
+        
+        generations = input(">>>Number of Generations<<<\n")
+        data['generations'] = generations
+
+    return data
+
+
 if __name__ == '__main__':
 
-    population, num_individuals = ev.load_population()
-    generations = 30
-    average_fitness, average_connectivity, best_of_generation = [], [], []
-    elite = [0, 0]
-    results.set_results_path(init, model, arena.arena, ev.pop_id)
-    print results.path
-
-    for gen in range(generations):
-        # Create a separate folder for each generation results
-        results.create_generation_folder(gen)
-        print 'generation: %d' % (gen + 1)
-        generation_log = []
-        for i in range(num_individuals):
-            print i
-            individual = population[i]
-            simData1 = simulate(individual)
-            simData2 = simulate(individual)
-            fitness = np.mean([simData1['fitness'], simData2['fitness']])
-            print 'fitness: %f %f %f' % (simData1['fitness'],
-                                         simData2['fitness'], fitness)
-            connectivity = ev.get_connectivity(population[i])
-            generation_log.append((individual, fitness, connectivity, simData1,
-                                   simData2, i))
+    data = get_simulation_details()
+    if data['mode'] == 'evolution':
+        # Evolution
+        population, num_individuals = ev.load_population(data['population'])
+        average_fitness, average_connectivity, best_of_generation = [], [], []
+        elite = [0, 0]
+        results.set_results_path(data['init'], data['model'], data['arena'],
+                                 data['population'])
+        print results.path
+        for gen in range(data['generations']):
+            # Create a separate folder for each generation results
+            results.create_generation_folder(gen)
+            print 'generation: %d' % (gen + 1)
+            generation_log = []
+            for i in range(num_individuals):
+                print i
+                individual = population[i]
+                simData1 = simulate(individual)
+                simData2 = simulate(individual)
+                fitness = np.mean([simData1['fitness'], simData2['fitness']])
+                print 'fitness: %f %f %f' % (simData1['fitness'],
+                                             simData2['fitness'], fitness)
+                connectivity = ev.get_connectivity(population[i])
+                generation_log.append((individual, fitness, connectivity, simData1,
+                                       simData2, i))
         average_fitness.append(np.mean([j[1] for j in generation_log]))
         average_connectivity.append(np.mean([j[2] for j in  generation_log]))
         print 'Average Fitness: %f\n' % average_fitness[gen]
@@ -193,6 +222,9 @@ if __name__ == '__main__':
         results.save_generation_results(top_performers[0], average_fitness,
                                         average_connectivity, gen)
         population = ev.evolve_new_generation(top_performers)
-    results.save_fitness(average_fitness,
+        results.save_fitness(average_fitness,
             [best_of_generation[i][1] for i in range(len(best_of_generation))])
+#    else:
+#        # Learning
+#        continue
     #plot_results(average_fitness, elite)
