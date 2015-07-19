@@ -3,6 +3,8 @@
 Created on Tue Jun 16 14:54:34 2015
 
 @author: akl
+
+Module for Simulation Live demonstration.
 """
 
 import numpy as np
