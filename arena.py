@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+
 Created on Sat Jul 18 08:38:23 2015
 
 @author: akl
@@ -7,8 +8,12 @@ Created on Sat Jul 18 08:38:23 2015
 import numpy as np
     
 class arena:
+    """Create arena object."""
+
+
     def __init__(self, arena_id):
         # Read walls image files
+        self.arena_id = arena_id
         self.wall_images = np.load('walls/arena%d.npz' % arena_id)
         
 
