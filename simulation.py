@@ -40,7 +40,7 @@ def create_empty_data_lists():
             'nrn_nrn_trace': data[9], 'reward': data[10], 'weights': data[11]}
 
 
-def simulate(individual, reset=True):
+def simulate(individual, arena, reset=True):
     """
     Run simulation for 40 seconds based on network topology encoded in
     individual.
@@ -59,8 +59,8 @@ def simulate(individual, reset=True):
     nest.set_verbosity('M_ERROR')
 
     if data['init'] == 'random':
-        x_init = np.random.randint(1, arena.x_max - 1)
-        y_init = np.random.randint(1, arena.y_max - 1)
+        x_init = np.random.randint(1, arena.maximum_length() - 1)
+        y_init = np.random.randint(1, arena.maximum_width() - 1)
         theta_init = np.pi*np.random.rand()
 
     simdata = create_empty_data_lists()
@@ -83,7 +83,7 @@ def simulate(individual, reset=True):
 
         # Set receptors' firing probability
         px = network.set_receptors_firing_rate(x_cur, y_cur, theta_cur,
-                                               err_l, err_r)
+                                               err_l, err_r, arena)
         simdata['pixel_values'].append(px)
 
         # Run simulation for 100 ms
@@ -93,7 +93,8 @@ def simulate(individual, reset=True):
 
         # Get desired and actual speeds
         col, speed_dict = motion.update_wheel_speeds(x_cur, y_cur, theta_cur,
-                                                 motor_firing_rates, t_step)
+                                                 motor_firing_rates, t_step,
+                                                 arena)
 
         # Stop simulation if collision occurs
         if col:
@@ -189,6 +190,7 @@ Population 2\n[3] Population 3\n")
 if __name__ == '__main__':
 
     data = get_simulation_details()
+    arena = arena.arena(data['arena'])
     if data['mode'] == 'evolution':
         # Evolution
         population, num_individuals = ev.load_population(data['population'])
@@ -205,8 +207,8 @@ if __name__ == '__main__':
             for i in range(num_individuals):
                 print i
                 individual = population[i]
-                simData1 = simulate(individual)
-                simData2 = simulate(individual)
+                simData1 = simulate(individual, arena)
+                simData2 = simulate(individual, arena)
                 fitness = np.mean([simData1['fitness'], simData2['fitness']])
                 print 'fitness: %f %f %f' % (simData1['fitness'],
                                              simData2['fitness'], fitness)

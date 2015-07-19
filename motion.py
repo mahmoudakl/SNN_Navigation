@@ -6,11 +6,10 @@ Created on Thu Jul 16 14:16:59 2015
 """
 import numpy as np
 
-import arena
 import network
 
 
-def detect_collision(v_left, v_right, x_cur, y_cur, theta_cur, t_step):
+def detect_collision(v_left, v_right, x_cur, y_cur, theta_cur, t_step, arena):
     """
     Detect if collision will occur based on the wheel speeds set.
 
@@ -20,6 +19,7 @@ def detect_collision(v_left, v_right, x_cur, y_cur, theta_cur, t_step):
     @param y_cur: Robot's current y position.
     @param theta_cur: Robot's current orientation angle.
     @param t_step: Simulation time-step.
+    @param arena: Arena object.
     """
 
     v_t = get_linear_velocity(v_left, v_right)
@@ -27,15 +27,16 @@ def detect_collision(v_left, v_right, x_cur, y_cur, theta_cur, t_step):
     collision = False
     x_next, y_next, theta_next = move(x_cur, y_cur, theta_cur, v_t, w_t,
                                       t_step/1000.)
-    if x_next <= 0 or x_next >= arena.x_max:
+    if x_next <= 0 or x_next >= arena.maximum_length():
         collision = True
-    elif y_next <= 0 or y_next >= arena.y_max:
+    elif y_next <= 0 or y_next >= arena.maximum_width():
         collision = True
 
     return collision
 
 
-def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates, t_step):
+def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates, t_step,
+                        arena):
     """
     Update the left and right wheel speeds and calculate the linear and
     angular speeds of the robot.
@@ -44,6 +45,7 @@ def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates, t_step):
     @param y_cur: Robot's current y position.
     @param theta_cur: Robot's current orientation.
     @param motor_firing_rates: Firing rates of the motor neurons.
+    @param arena: Arena object.
     """
 
     v_l, v_r = network.get_wheel_speeds(motor_firing_rates)
@@ -53,7 +55,7 @@ def update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates, t_step):
     v_l_act = v_l*r1
     v_r_act = v_r*r2
     collision = detect_collision(v_l_act, v_r_act, x_cur,  y_cur, theta_cur,
-                                 t_step)
+                                 t_step, arena)
     if collision:
         return True, {}
         

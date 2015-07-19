@@ -7,13 +7,8 @@ Created on Thu Jul 16 14:12:26 2015
 import random
 import numpy as np
 
-import arena
 
-x_max = arena.x_max
-y_max = arena.y_max
-
-
-def get_visible_wall_coordinates(x, y, theta):
+def get_visible_wall_coordinates(x, y, theta, arena):
     """
     Calculate the visible part of the walls to the robot based on its
     position and orientation and the visual angle of 36 degrees.
@@ -21,14 +16,15 @@ def get_visible_wall_coordinates(x, y, theta):
     @param x: Robot x position
     @param y: Robot y position
     @param theta: Robot orientation angle
+    @param arena: Arena object
     """
 
     # The two angles reiesenting the vision range
     theta = theta % (2*np.pi)
     theta_1 = theta + np.deg2rad(18)
     theta_2 = theta - np.deg2rad(18)
-    vertical_dist = y_max - y
-    horizontal_dist = x_max - x
+    vertical_dist = arena.maximum_width() - y
+    horizontal_dist = arena.maximum_length() - x
 
     # Robot's orientation angle lies in the first quadrant
     if theta >= 0 and theta < np.pi/2:
@@ -41,14 +37,14 @@ def get_visible_wall_coordinates(x, y, theta):
             # wall2
             angle = np.pi/2 - theta_1
             opp = vertical_dist*np.sin(angle)/np.cos(angle)
-            if opp + x <= x_max:
+            if opp + x <= arena.maximum_length():
                 # Left limit is on wall1
                 intersect_left = 1, opp + x
             else:
                 # Left limit is on wall 2
-                opp = opp + x - x_max
+                opp = opp + x - arena.maximum_length()
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_left = 2, y_max - adj
+                intersect_left = 2, arena.maximum_width() - adj
         else:
             # Left limit exceeds 90 deg., visible may be wall1 or wall4
             angle = theta_1 - np.pi/2
@@ -60,7 +56,7 @@ def get_visible_wall_coordinates(x, y, theta):
                 # Left limit is on wall4
                 opp = np.abs(x - opp)
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_left = 4, y_max - adj
+                intersect_left = 4, arena.maximum_width() - adj
 
         if theta_2 == 0:
             # Right limit is exactly 0 deg., visible is wall2
@@ -69,15 +65,15 @@ def get_visible_wall_coordinates(x, y, theta):
             # Right limit exceeds 0 deg., visible may be wall1 or
             # wall2
             adj = vertical_dist*np.cos(theta_2)/np.sin(theta_2)
-            if adj + x <= x_max:
+            if adj + x <= arena.maximum_length():
                 # Right limit is on wall1
                 intersect_right = 1, adj + x
             else:
                 # Right limit on wall2
                 angle = np.pi/2 - theta_2
-                opp = adj + x - x_max
+                opp = adj + x - arena.maximum_length()
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_right = 2, y_max - adj
+                intersect_right = 2, arena.maximum_width() - adj
         else:
             # Right limit less than 0 deg., visible may be wall2 or
             # wall3
@@ -90,7 +86,7 @@ def get_visible_wall_coordinates(x, y, theta):
                 # Right limit on wall3
                 opp = opp - y
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_right = 3, x_max - adj
+                intersect_right = 3, arena.maximum_length() - adj
 
     # Robot's orientation angle lies in the second quadrant
     elif theta >= np.pi/2 and theta < np.pi:
@@ -110,7 +106,7 @@ def get_visible_wall_coordinates(x, y, theta):
                 # Left limit is on wall2
                 adj = np.abs(x - adj)
                 opp = adj*np.sin(angle)/np.cos(angle)
-                intersect_left = 4, y_max - opp
+                intersect_left = 4, arena.maximum_width() - opp
         else:
             # Left limit excceeds 180 deg., visible may be wall3 or
             # wall4
@@ -140,20 +136,20 @@ def get_visible_wall_coordinates(x, y, theta):
                 # Right limit is on wall4
                 opp = opp - x
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_right = 4, y_max - adj
+                intersect_right = 4, arena.maximum_width() - adj
         else:
             # Right limit less than 90 deg., visible may be wall1 or
             # wall2
             angle = np.pi/2 - theta_2
             opp = vertical_dist*np.sin(angle)/np.cos(angle)
-            if x + opp <= x_max:
+            if x + opp <= arena.maximum_length():
                 # Right limit is on wall1
                 intersect_right = 1, x + opp
             else:
                 # Right limit is on wall2
-                opp = x + opp - x_max
+                opp = x + opp - arena.maximum_length()
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_right = 2, y_max - adj
+                intersect_right = 2, arena.maximum_width() - adj
 
     # Robot's orientation angle lies in the third quadrant
     elif theta >= np.pi and theta < 3*np.pi/2:
@@ -179,12 +175,12 @@ def get_visible_wall_coordinates(x, y, theta):
             # wall3
             angle = theta_1 - 3*np.pi/2
             opp = y*np.sin(angle)/np.cos(angle)
-            if x + opp <= x_max:
+            if x + opp <= arena.maximum_length():
                 # Left limit is on wall3
                 intersect_left = 3, x + opp
             else:
                 # Left limit is on wall2
-                opp = x + opp - x_max
+                opp = x + opp - arena.maximum_length()
                 adj = opp*np.cos(angle)/np.sin(angle)
                 intersect_left = 2, adj
 
@@ -209,12 +205,12 @@ def get_visible_wall_coordinates(x, y, theta):
             # wall4
             angle = np.pi - theta_2
             opp = x*np.sin(angle)/np.cos(angle)
-            if y + opp <= y_max:
+            if y + opp <= arena.maximum_width():
                 # Right limit is on wall4
                 intersect_right = 4, y + opp
             else:
                 # Right limit is on wall1
-                opp = y + opp - y_max
+                opp = y + opp - arena.maximum_width()
                 adj = opp*np.cos(angle)/np.sin(angle)
                 intersect_right = 1, adj
 
@@ -229,12 +225,12 @@ def get_visible_wall_coordinates(x, y, theta):
             # wall3
             angle = theta_1 - 3*np.pi/2
             opp = y*np.sin(angle)/np.cos(angle)
-            if x + opp <= x_max:
+            if x + opp <= arena.maximum_length():
                 # eft limit on wall3
                 intersect_left = 3, x + opp
             else:
                 # Left limit on wall2
-                opp = x + opp - x_max
+                opp = x + opp - arena.maximum_length()
                 adj = opp*np.cos(angle)/np.sin(angle)
                 intersect_left = 2, adj
         else:
@@ -242,14 +238,14 @@ def get_visible_wall_coordinates(x, y, theta):
             # wall2
             angle = theta_1 - 2*np.pi
             opp = horizontal_dist*np.sin(angle)/np.cos(angle)
-            if y + opp <= y_max:
+            if y + opp <= arena.maximum_width():
                 # Left limit is on wall2
                 intersect_left = 2, y + opp
             else:
                 # Left limit is on wall1
-                opp = y + opp - y_max
+                opp = y + opp - arena.maximum_width()
                 adj = opp*np.cos(angle)/np.sin(angle)
-                intersect_left = 1, x_max - adj
+                intersect_left = 1, arena.maximum_length() - adj
 
         if theta_2 == 3*np.pi/2:
             # Right limit is exactly 270 deg., visible is wall3
@@ -259,12 +255,12 @@ def get_visible_wall_coordinates(x, y, theta):
             # wall3
             angle = theta_2 - 3*np.pi/2
             opp = y*np.sin(angle)/np.cos(angle)
-            if x + opp <= x_max:
+            if x + opp <= arena.maximum_length():
                 # Right limit is on wall3
                 intersect_right = 3, x + opp
             else:
                 # Right limit is on wall2
-                opp = x + opp - x_max
+                opp = x + opp - arena.maximum_length()
                 adj = opp*np.cos(angle)/np.sin(angle)
                 intersect_right = 2, adj
         else:
@@ -298,7 +294,7 @@ def get_angle(adj, opp):
     return angle
 
 
-def get_walls_view_ratio(il, ir, x, y, theta):
+def get_walls_view_ratio(il, ir, x, y, theta, arena):
     """
     Get the ratios of the receptors viewed on each wall, in case more
     than one wall is visible. The method returns a list, where the first
@@ -333,12 +329,12 @@ def get_walls_view_ratio(il, ir, x, y, theta):
     elif wall_left - wall_right in (-1, 3):
         # Two walls visible
         if wall_left == 1 and wall_right == 2:
-            x_dist = x_max - x
-            y_dist = y_max - y
+            x_dist = arena.maximum_length() - x
+            y_dist = arena.maximum_width() - y
             angle = get_angle(x_dist, y_dist)
             wall_left_proportion = (theta_1 - angle)/theta_total
         elif wall_left == 2 and wall_right == 3:
-            x_dist = x_max - x
+            x_dist = arena.maximum_length() - x
             y_dist = y
             if theta_1 > 3*np.pi/2:
                 angle = 3*np.pi/2 + get_angle(y_dist, x_dist)
@@ -353,7 +349,7 @@ def get_walls_view_ratio(il, ir, x, y, theta):
             wall_left_proportion = (theta_1 - angle)/theta_total
         elif wall_left == 4 and wall_right == 1:
             x_dist = x
-            y_dist = y_max - y
+            y_dist = arena.maximum_width() - y
             angle = np.pi/2 + get_angle(y_dist, x_dist)
             wall_left_proportion = (theta_1 - angle)/theta_total
 
@@ -366,12 +362,12 @@ def get_walls_view_ratio(il, ir, x, y, theta):
             angle1 = get_angle(x_dist, y_dist)
             angle = np.pi + angle1
             wall_left_proportion = (theta_1 - angle)/theta_total
-            y_dist = y_max - y
+            y_dist = arena.maximum_width() - y
             angle2 = get_angle(x_dist, y_dist)
             wall_middle_proportion = (angle1 + angle2)/theta_total
         else:
-            x_dist = x_max - x
-            y_dist = y_max - y
+            x_dist = arena.maximum_length() - x
+            y_dist = arena.maximum_width() - y
             angle1 = get_angle(x_dist, y_dist)
             wall_left_proportion = (theta_1 - angle1)/theta_total
             y_dist = y
@@ -398,7 +394,7 @@ def fix_boundary_condition(coord):
     return coord
 
 
-def get_view(x, y, intersect_l, intersect_r, view_proportion):
+def get_view(x, y, intersect_l, intersect_r, view_proportion, arena):
     """
     Extract the pixel values that the robot sees based on the visible
     wall coordinates. If multiple walls visible, stich values together,
@@ -414,13 +410,16 @@ def get_view(x, y, intersect_l, intersect_r, view_proportion):
         robot's vision range.
     @param view_poportion: The proportion of the view that each wall
                             covers, in case multiple walls visible.
+    @param arena: 
     """
 
+    wall_dict = {1: arena.getwall1, 2: arena.getwall2, 3: arena.getwall3,
+                 4: arena.getwall4}
     wall_left = intersect_l[0]
     wall_right = intersect_r[0]
 
-    visible_wall_left = arena.wall_dict[wall_left]
-    visible_wall_right = arena.wall_dict[wall_right]
+    visible_wall_left = wall_dict[wall_left]()
+    visible_wall_right = wall_dict[wall_right]()
 
     coordinate_left = int(round(intersect_l[1]))
     coordinate_left = fix_boundary_condition(coordinate_left)
@@ -443,7 +442,7 @@ def get_view(x, y, intersect_l, intersect_r, view_proportion):
             view = visible_wall_left[coordinate_left:coordinate_right]
         view_tuples = breakdown_view(view)
         view_angles = get_stripes_angle(view_tuples, x, y, coordinate_left,
-                                        wall_left)
+                                        wall_left, arena)
         if len(view_angles) == 0:
             print x, y, intersect_l, intersect_r, view_proportion
         view = get_photoreceptors_values(view_angles, 64)
@@ -460,7 +459,7 @@ def get_view(x, y, intersect_l, intersect_r, view_proportion):
             total_view_l = visible_wall_left[:coordinate_left]
             if wall_right == 3:
                 total_view_r = visible_wall_right[coordinate_right:]
-                crl = x_max
+                crl = arena.maximum_length()
                 cll = coordinate_left
             else:
                 total_view_r = visible_wall_right[:coordinate_right]
@@ -471,13 +470,15 @@ def get_view(x, y, intersect_l, intersect_r, view_proportion):
             total_view_r = visible_wall_right[coordinate_right:]
             cll = coordinate_left
             if wall_left == 1:
-                crl = y_max
+                crl = arena.maximum_width()
             else:
                 crl = 0
         view_l_tuples = breakdown_view(total_view_l)
-        view_l_angles = get_stripes_angle(view_l_tuples, x, y, cll, wall_left)
+        view_l_angles = get_stripes_angle(view_l_tuples, x, y, cll, wall_left,
+                                          arena)
         view_r_tuples = breakdown_view(total_view_r)
-        view_r_angles = get_stripes_angle(view_r_tuples, x, y, crl, wall_right)
+        view_r_angles = get_stripes_angle(view_r_tuples, x, y, crl, wall_right,
+                                          arena)
         if view_l_tuples == [] or view_r_tuples == []:
             print intersect_l, intersect_r, view_proportion
         if len(view_l_angles) == 0 or len(view_r_angles) == 0:
@@ -497,26 +498,28 @@ def get_view(x, y, intersect_l, intersect_r, view_proportion):
         if wall_left == 1:
             total_view_l = visible_wall_left[coordinate_left:]
             total_view_r = visible_wall_right[coordinate_right:]
-            total_view_m = arena.wall_dict[2]
+            total_view_m = arena.getwall2()
             wall_m = 2
             cll = coordinate_left
-            cml = y_max
-            crl = x_max
+            cml = arena.maximum_width()
+            crl = arena.maximum_length()
         elif wall_left == 3:
             total_view_l = visible_wall_left[:coordinate_left]
             total_view_r = visible_wall_right[:coordinate_right]
-            total_view_m = arena.wall_dict[4]
+            total_view_m = arena.getwall4()
             wall_m = 4
             cll = coordinate_left
             cml = 0
             crl = 0
         view_l_tuples = breakdown_view(total_view_l)
-        view_l_angles = get_stripes_angle(view_l_tuples, x, y, cll,
-                                          wall_left)
+        view_l_angles = get_stripes_angle(view_l_tuples, x, y, cll, wall_left,
+                                          arena)
         view_m_tuples = breakdown_view(total_view_m)
-        view_m_angles = get_stripes_angle(view_m_tuples, x, y, cml, wall_m)
+        view_m_angles = get_stripes_angle(view_m_tuples, x, y, cml, wall_m,
+                                          arena)
         view_r_tuples = breakdown_view(total_view_r)
-        view_r_angles = get_stripes_angle(view_r_tuples, x, y, crl, wall_right)
+        view_r_angles = get_stripes_angle(view_r_tuples, x, y, crl, wall_right,
+                                          arena)
         if view_l_tuples == [] or view_m_tuples == []or view_r_tuples == []:
             print intersect_l, intersect_r, view_proportion
         if len(view_l_angles) == 0 or len(view_m_angles) == 0 or \
@@ -586,7 +589,7 @@ def get_photoreceptors_values(view_angles, n):
     return receptors
 
 
-def get_stripes_angle(view_tuples, x, y, cl, wall):
+def get_stripes_angle(view_tuples, x, y, cl, wall, arena):
     """
     Calculate the proportion of the total view angle that each stripe
     covers.
@@ -597,6 +600,7 @@ def get_stripes_angle(view_tuples, x, y, cl, wall):
     @param y: Robot's current y position.
     @param cl: the leftmost absolute coordinate in the view.
     @param wall: visible wall number.
+    @param arena: Arena object.
     """
 
     stripes_angles = []
@@ -604,12 +608,12 @@ def get_stripes_angle(view_tuples, x, y, cl, wall):
     for stripe in view_tuples:
         s1 = stripe[1]
         if wall == 1:
-            s2 = distance(x, y, acc_dist, y_max)
-            s3 = distance(x, y, acc_dist + s1, y_max)
+            s2 = distance(x, y, acc_dist, arena.maximum_width())
+            s3 = distance(x, y, acc_dist + s1, arena.maximum_width())
             acc_dist += s1
         elif wall == 2:
-            s2 = distance(x, y, x_max, acc_dist)
-            s3 = distance(x, y, x_max, acc_dist - s1)
+            s2 = distance(x, y, arena.maximum_length(), acc_dist)
+            s3 = distance(x, y, arena.maximum_length(), acc_dist - s1)
             acc_dist -= s1
         elif wall == 3:
             s2 = distance(x, y, acc_dist, 0)

@@ -155,7 +155,7 @@ def create_nodes(model):
     return neurons, receptors
 
 
-def set_receptors_firing_rate(x, y, theta, err_l, err_r):
+def set_receptors_firing_rate(x, y, theta, err_l, err_r, arena):
     """
     Set the firing rate of the 18 neural receptors according to the
     robot's current view and the error in wheel speeds.
@@ -169,9 +169,9 @@ def set_receptors_firing_rate(x, y, theta, err_l, err_r):
                     wheel.
     """
 
-    il, ir = vision.get_visible_wall_coordinates(x, y, theta)
-    view_proportion = vision.get_walls_view_ratio(il, ir, x, y, theta)
-    view = vision.get_view(x, y, il, ir, view_proportion)
+    il, ir = vision.get_visible_wall_coordinates(x, y, theta, arena)
+    view_proportion = vision.get_walls_view_ratio(il, ir, x, y, theta, arena)
+    view = vision.get_view(x, y, il, ir, view_proportion, arena)
     if len(view) != 64:
         print len(view), il, ir, view_proportion
 
