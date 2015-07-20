@@ -24,8 +24,6 @@ theta_init = 1.981011
 t_step = 100.0
 n_step = 400
 
-sim_specs = {}
-
 
 def create_empty_data_lists():
     """
