@@ -7,26 +7,7 @@ Created on Thu Jul  2 17:46:27 2015
 
 import numpy as np
 
-import network
-import environment as env
-import simulation as sim
-import evolution as ev
-import results
-
 import nest
-
-init = 'fixed'
-#init = 'random'
-
-model = 'mat'
-#model = 'iaf'
-
-x_init = 195
-y_init = 65
-theta_init = 1.981011
-
-x_cur = 0
-y_cur = 0
 
 t_step = 100.0
 n_step = 400
@@ -76,77 +57,6 @@ def sim_small_network():
                                                     prev_tag)
         rec_e_trace[i] = syn
     return rec_e_trace, rctr_t, nrn_t
-
-
-def simulate(neurons, receptors, nrns_sd, rctrs_sd):
-    """
-    """
-
-    global simtime, x_cur, y_cur, x_init, y_init, theta_init
-    simdata = sim.create_empty_data_lists()
-
-    if init == 'random':
-        x_init = np.random.randint(50, env.x_max - 50)
-        y_init = np.random.randint(50, env.y_max - 50)
-        theta_init = np.pi*np.random.rand()
-    x_cur = x_init
-    y_cur = y_init
-    theta_cur = theta_init
-    simdata['x_init'] = x_cur
-    simdata['y_init'] = y_cur
-
-    err_l, err_r = 0, 0
-
-    simdata['rctr_nrn_trace'].append(np.zeros((18, 10)))
-    simdata['nrn_nrn_trace'].append(np.zeros((10, 10)))
-    motor_spks = nrns_sd[6:]
-
-    for t in range(n_step):
-        ev.update_refratory_perioud()
-        simdata['traj'].append((x_cur, y_cur))
-
-        px = network.set_receptors_firing_rate(x_cur, y_cur, theta_cur,
-                                               err_l, err_r)
-        simdata['pixel_values'].append(px)
-
-        # Run simulation for time-step
-        nest.Simulate(t_step)
-        simtime += t_step
-        motor_firing_rates = network.get_motor_neurons_firing_rates(motor_spks)
-
-        v_l_act, v_r_act, v_t, w_t, err_l, err_r, col, v_l_des, v_r_des = \
-        sim.update_wheel_speeds(x_cur, y_cur, theta_cur, motor_firing_rates)
-
-        # Save dsired and actual speeds
-        simdata['speed_log'].append((v_l_act, v_r_act))
-        simdata['desired_speed_log'].append((v_l_des, v_r_des))
-
-        # Save motor neurons firing rates
-        simdata['motor_fr'].append(motor_firing_rates)
-
-        # Save linear and angualr velocities
-        simdata['linear_velocity_log'].append(v_t)
-        simdata['angular_velocity_log'].append(w_t)
-
-        # Move robot according to the read-out speeds from motor neurons
-        x_cur, y_cur, theta_cur = env.move(x_cur, y_cur, theta_cur, v_t, w_t)
-
-        nrns_st, rctrs_st = get_spike_times(nrns_sd, rctrs_sd)
-        rec_nrn_tags, nrn_nrn_tags, rctr_t, nrn_t, pt = get_eligibility_trace(
-                    nrns_st, rctrs_st, simtime,
-                    simdata['rctr_nrn_trace'][t], simdata['nrn_nrn_trace'][t])
-        print simtime
-        simdata['rctr_nrn_trace'].append(rec_nrn_tags)
-        simdata['nrn_nrn_trace'].append(nrn_nrn_tags)
-
-        # Stop simulation if collision occurs
-        if col:
-            simdata['speed_log'].extend((0, 0) for k in range(t, 400))
-            break
-
-    simdata['fitness'] = ev.get_fitness_value(simdata['speed_log'])
-
-    return simdata, rctr_t, nrn_t, pt, col
 
 
 def get_reward(reward, fitness, x, y):
@@ -464,24 +374,3 @@ def get_previous_spike(spike_times, current_time, spike_type):
                     else:
                         continue
             return -1
-
-
-if __name__ == '__main__':
-    results.set_results_path(init, model, env.arena, 0)
-    nest.SetKernelStatus({'resolution': 1.0})
-    fitness, rewards, weights = [], [], []
-    fitness.append(0)
-    rewards.append(0)
-    nrns, nrns_sd, rctrs, rctrs_sd, pop_spikes = \
-                                network.create_learning_network(model)
-
-    for i in range(50):
-        weights.append(get_weights(rctrs, nrns))
-        simdata, rt, nt, pt, col = simulate(nrns, rctrs, nrns_sd, rctrs_sd)
-        fitness.append(simdata['fitness'])
-        reward = get_reward(rewards[-1], fitness[-1], x_cur, y_cur)
-        rewards.append(reward)
-        delta_w_rec, delta_w_nrn = get_weight_changes(reward, simdata['rctr_nrn_trace'][-1],
-                                                      simdata['nrn_nrn_trace'][-1])
-        update_weights(delta_w_rec, delta_w_nrn, nrns, rctrs)
-        results.save_rl_results(simdata, pop_spikes, i)

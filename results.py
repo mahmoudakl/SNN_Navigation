@@ -12,7 +12,7 @@ from matplotlib import cm
 import numpy as np
 import os
 import environment as env
-import evolution as ev
+
 import nest
 import nest.voltage_trace
 import nest.raster_plot
@@ -490,7 +490,7 @@ def save_generation_results(best, avg_fitness, avg_connect, gen):
     @param best: Best individual's simulation data.
     @param avg_fitness: Generation's average fitness.
     @param avg_connect: Generation's average connectivity.
-    @param g: Generation number.
+    @param gen: Generation number.
     """
 
     global path
@@ -550,17 +550,8 @@ def save_rl_results(simdata, pop_spikes, i):
     path_local = path + '/run%d' % i
     os.mkdir(path_local)
 
-#    plot_receptor_spiking_activity(pop_spikes[:1])
-#    plt.savefig(path_local + '/receptors.png')
-#
-#    plot_neurons_spiking_activity(pop_spikes[1:])
-#    plt.savefig(path_local + '/neurons.png')
-
     plot_trajectory(simdata['traj'], simdata['x_init'], simdata['y_init'])
     plt.savefig(path_local + '/trajectory.png')
-
-#    plot_reward(simdata['reward'])
-#    plt.savefig(path_local + '/reward.png')
 
     plot_wheel_speeds(simdata['speed_log'])
     plt.savefig(path_local + '/speeds.png')
