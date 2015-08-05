@@ -6,6 +6,7 @@ Created on Thu Jul 16 14:12:26 2015
 """
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def get_visible_wall_coordinates(x, y, theta, arena):
@@ -705,3 +706,52 @@ def scale_list(p):
         p[i] = (p[i])/255.
 
     return p
+
+
+def view_image(view):
+    """
+    Display what the robot sees by stacking several copies of the
+    one-row image visible to the robot.
+
+    @param view: pixel values of one row of the robot's view.
+    """
+
+    # Stack more copies of the pixel values row for visualization
+    # purposes.
+    line = view
+    for i in range(1000):
+        view = np.vstack((view, line))
+    print view.shape
+    ypixels, xpixels = view.shape
+    dpi = 400.
+    xinch = xpixels/dpi
+    yinch = ypixels/dpi
+    fig = plt.gcf()
+    fig.set_size_inches(xinch, yinch)    
+    ax = plt.axes([0., 0., 1., 1.], xticks=[],yticks=[])
+    ax.imshow(view, interpolation='none', cmap=plt.get_cmap('gray'))
+    plt.show()
+
+    return view
+
+def quadruple_pixels(view):
+    """
+    """
+
+    big_view = []
+    for i in view:
+        for j in range(4):
+            big_view.append(i)
+
+    return big_view
+
+
+def vertical_stack(view):
+    """
+    """
+
+    line = view
+    for i in range(1000):
+        view = np.vstack((view, line))
+
+    return view

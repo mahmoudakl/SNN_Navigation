@@ -147,6 +147,7 @@ def create_nodes(model):
         neuron_params = {'V_m': 0.0, 'E_L': 0.0, 'C_m': 50.0, 'tau_m': 4.0,
                          't_ref': np.random.uniform(0.1, 2), 'V_th': 0.1,
                          'V_reset': np.random.uniform(0, -1), 'tau_syn': 10.0}
+        # 10 lif neurons
         neurons = nest.Create('iaf_neuron', 10, neuron_params)
 
     # 18 poisson generators representing neural receptors
