@@ -6,7 +6,6 @@ Created on Tue Apr 14 17:00:27 2015
 """
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from matplotlib import cm
 import numpy as np
@@ -264,7 +263,7 @@ def plot_motor_neurons_firing_rates(motor_fr_log):
     """
     Plot andsave the motor neurons firing rates log in a txt file.
 
-    @param motor_fr_log: motor neurons firing rates log
+    @param motor_fr_log: motor neurons firing rates log.
     """
 
     t = range(len(motor_fr_log))
@@ -300,6 +299,9 @@ def plot_receptor_spiking_activity(receptor_sd):
     """
     Plot the receptors' spiking activity of the last simulated
     individual.
+
+    @param receptor_sd: GID of the spike detector device connected to
+                        the receptors.
     """
 
     nest.raster_plot.from_device(receptor_sd,
@@ -313,6 +315,9 @@ def plot_receptor_spiking_activity(receptor_sd):
 def plot_neurons_spiking_activity(neuron_sd):
     """
     Plot the spiking activity of the 10 neurons throughout the 40s.
+
+    @param neuron_sd: GID of the spike detector device connected to the
+                        neurons.
     """
 
     nest.raster_plot.from_device(neuron_sd,

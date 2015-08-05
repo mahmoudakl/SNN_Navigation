@@ -192,6 +192,10 @@ def simulate_evolution(individual, arena, reset=True):
 
 def select_random_pose(arena):
     """
+    Choose an initial random pose in the arena that is at least 50 mm
+    away from the walls.
+
+    @arena: The arena object in which the simulation is carried out.
     """
 
     x = np.random.randint(50, arena.maximum_length() - 50)

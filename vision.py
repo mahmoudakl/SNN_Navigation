@@ -736,6 +736,9 @@ def view_image(view):
 
 def quadruple_pixels(view):
     """
+    Show every pixel four times.
+
+    @param view: List of pixel values.
     """
 
     big_view = []
@@ -748,6 +751,9 @@ def quadruple_pixels(view):
 
 def vertical_stack(view):
     """
+    Vertically stack the row of pixels for viewing purposes.
+
+    @param view: List of pixel values.
     """
 
     line = view
