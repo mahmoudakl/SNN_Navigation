@@ -291,6 +291,12 @@ Population 2\n[3] Population 3\n")
         runs = input(">>>Number of Runs<<<\n")
         data['runs'] = runs
 
+    time = input(">>>Duration of Simulation in Seconds<<<\n")
+    data['time'] = time*1000
+
+    interval = input(">>>Duration of Interval in Milliseconds<<<\n")
+    data['interval'] = interval
+
     return data
 
 
@@ -314,8 +320,12 @@ if __name__ == '__main__':
             for i in range(num_individuals):
                 print i
                 individual = population[i]
-                simData1 = simulate_evolution(individual, arena)
-                simData2 = simulate_evolution(individual, arena)
+                simData1 = simulate_evolution(individual, arena,
+                                              data['time']/data['interval'],
+                                              data['interval'])
+                simData2 = simulate_evolution(individual, arena,
+                                              data['time']/data['interval'],
+                                              data['interval'])
                 fitness = np.mean([simData1['fitness'], simData2['fitness']])
                 print 'fitness: %f %f %f' % (simData1['fitness'],
                                              simData2['fitness'], fitness)
