@@ -136,6 +136,7 @@ def create_nodes(model):
     @param model: Neuronal model.
     """
 
+    # Multi-timescale Adaptive Threhsold Neuronal Model
     if model == 'mat':
         neuron_params = {'E_L': 0.0, 'V_m': 0.0, 'tau_m': 4.0, 'C_m': 10.0,
                          'tau_syn_ex': 3.0, 'tau_syn_in': 3.0, 'omega': 0.1,
@@ -143,6 +144,7 @@ def create_nodes(model):
                          't_ref': 0.1, 'tau_1': 4.0}
         # 10 mat neurons
         neurons = nest.Create('mat2_psc_exp', 10, neuron_params)
+    # Leaky Integrate and Fire Neuronal Model
     else:
         neuron_params = {'V_m': 0.0, 'E_L': 0.0, 'C_m': 50.0, 'tau_m': 4.0,
                          't_ref': np.random.uniform(0.1, 2), 'V_th': 0.1,
@@ -270,25 +272,16 @@ def get_motor_neurons_firing_rates(motor_spikes):
                         connected to the motor neurons.
     """
 
-    spikes_left_fwd = motor_spikes[:1]
-    spikes_left_bwd = motor_spikes[1:2]
-    spikes_right_fwd = motor_spikes[2:3]
-    spikes_right_bwd = motor_spikes[3:]
+    left_fwd_fr = get_neuron_firing_rate(nest.GetStatus(motor_spikes[:1])[0]\
+                                                        ['events']['times'])
+    left_bwd_fr = get_neuron_firing_rate(nest.GetStatus(motor_spikes[1:2])[0]\
+                                                        ['events']['times'])
+    right_fwd_fr = get_neuron_firing_rate(nest.GetStatus(motor_spikes[2:3])[0]\
+                                                        ['events']['times'])
+    right_bwd_fr = get_neuron_firing_rate(nest.GetStatus(motor_spikes[3:])[0]\
+                                                        ['events']['times'])
 
-    # Spike times for the left and right wheel neurons
-    left_fwd_events = nest.GetStatus(spikes_left_fwd)[0]['events']['times']
-    left_bwd_events = nest.GetStatus(spikes_left_bwd)[0]['events']['times']
-    right_fwd_events = nest.GetStatus(spikes_right_fwd)[0]['events']['times']
-    right_bwd_events = nest.GetStatus(spikes_right_bwd)[0]['events']['times']
-
-    left_fwd_fr = get_neuron_firing_rate(left_fwd_events)
-    left_bwd_fr = get_neuron_firing_rate(left_bwd_events)
-    right_fwd_fr = get_neuron_firing_rate(right_fwd_events)
-    right_bwd_fr = get_neuron_firing_rate(right_bwd_events)
-
-    firing_rates = (left_fwd_fr, left_bwd_fr, right_fwd_fr, right_bwd_fr)
-
-    return firing_rates
+    return (left_fwd_fr, left_bwd_fr, right_fwd_fr, right_bwd_fr)
 
 
 def get_voltmeter_data():
@@ -305,24 +298,15 @@ def get_voltmeter_data():
 
 def get_wheel_speeds(motor_firing_rates):
     """
-    Get the speed of the left and right wheels based on spiking activity
-    in the motor neurons.
+    Get the speed of the left and right wheels based on the firing rates
+    of the motor neurons. The total wheel speed is the algebraic sum of
+    the firing rates of the forward and backward neurons. The maximum
+    speed is 80 mm/s.
 
     @param motor_firing_rates: Firing rates of the motor neurons.
     """
 
-    left_fwd_fr = motor_firing_rates[0]
-    left_bwd_fr = motor_firing_rates[1]
-    right_fwd_fr = motor_firing_rates[2]
-    right_bwd_fr = motor_firing_rates[3]
-
-    # Map the firing rate of motor neurons into a maximum speed of
-    # 80mm/s And determine the wheel speed using the algebraic sum of
-    # the values of both neurons setting the amounts of forward and
-    # backward speeds for each wheel.
-
-    speed_left = (left_fwd_fr - left_bwd_fr)*80
-
-    speed_right = (right_fwd_fr - right_bwd_fr)*80
+    speed_left = (motor_firing_rates[0] - motor_firing_rates[1])*80
+    speed_right = (motor_firing_rates[2] - motor_firing_rates[3])*80
 
     return speed_left, speed_right
