@@ -289,8 +289,7 @@ def get_angle(adj, opp):
     @param opp: Opposite side
     """
 
-    tan_angle = opp/float(adj)
-    angle = np.arctan(tan_angle)
+    angle = np.arctan(opp/float(adj))
 
     return angle
 
@@ -676,8 +675,8 @@ def add_noise_to_pixels(p):
 
 def laplace_filter(px):
     """
-    Implementation of the laplace filter as specified in the paper
-    -0.5 1 -0.5
+    Implementation of the laplace filter as specified in Floreano's
+    paper [-0.5, 1, -0.5].
 
     @param px: List of pixel values
     """
@@ -716,8 +715,6 @@ def view_image(view):
     @param view: pixel values of one row of the robot's view.
     """
 
-    # Stack more copies of the pixel values row for visualization
-    # purposes.
     line = view
     for i in range(1000):
         view = np.vstack((view, line))

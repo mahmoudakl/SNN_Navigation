@@ -40,6 +40,15 @@ def create_empty_data_lists():
 
 def simulate_learning(neurons, receptors, nrns_sd, rctrs_sd, arena):
     """
+    Run simulation for 40 seconds based on network topology encoded in
+    individual.
+
+    @param individual: Binary string encoding network topology.
+    @param arena: The arena object in which the simulation is carried
+                    out.
+    @param n_step: Number of steps the simulation is divided in.
+    @param t_step: Number of milliseconds in each step.
+    @param reset: bool triggering the reset of the nest kernel.
     """
 
     global simtime
@@ -107,12 +116,16 @@ def simulate_learning(neurons, receptors, nrns_sd, rctrs_sd, arena):
     return simdata, rctr_t, nrn_t, pt, col    
 
 
-def simulate_evolution(individual, arena, reset=True):
+def simulate_evolution(individual, arena, n_step, t_step, reset=True):
     """
     Run simulation for 40 seconds based on network topology encoded in
     individual.
 
     @param individual: Binary string encoding network topology.
+    @param arena: The arena object in which the simulation is carried
+                    out.
+    @param n_step: Number of steps the simulation is divided in.
+    @param t_step: Number of milliseconds in each step.
     @param reset: bool triggering the reset of the nest kernel.
     """
 
@@ -195,7 +208,8 @@ def select_random_pose(arena):
     Choose an initial random pose in the arena that is at least 50 mm
     away from the walls.
 
-    @arena: The arena object in which the simulation is carried out.
+    @param arena: The arena object in which the simulation is carried
+                    out.
     """
 
     x = np.random.randint(50, arena.maximum_length() - 50)

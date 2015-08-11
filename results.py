@@ -395,6 +395,12 @@ def plot_avergae_spikes_per_second(spikes):
 
 def plot_eligibility_trace(tags, rec, nrn, color=None):
     """
+    Plot the eligibility trace for a connection.
+
+    @param tags: Array of eligibility traces for all connections.
+    @param rec: Index of presynaptic neuron.
+    @param nrn: Index of postsynaptic neuron.
+    @param color: Color of the graph.
     """
 
     label = "Receptor %d - Neuron %d" % (rec+11, nrn+1)
