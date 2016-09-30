@@ -2,7 +2,7 @@ import vision
 import arena
 
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class robot:
     """Create a two-wheeled robot body"""
@@ -20,6 +20,27 @@ class robot:
         self.intersect_left = ()
         self.intersect_right = ()
         self.get_visible_wall_coordinates()
+        self.fig = plt.figure()
+        self.replot_robot()
+
+
+    def replot_robot(self):
+        """
+        """
+        plt.clf()
+        plt.xlim(0, self.arena.maximum_width)
+        plt.ylim(0, self.arena.maximum_length)
+        plt.xticks([])
+        plt.yticks([])
+        plt.plot(self.x_cur, self.y_cur, 'Dr')
+        self.fig.show()
+    
+
+    def calculate_reward(self, v_left, v_right):
+        """
+        """
+        if v_left < 0 or v_right < 0:
+            return 0
 
 
     def move(self, v_left, v_right):
@@ -28,8 +49,8 @@ class robot:
         and angular velocities of the robot, and its current position and
         orientation and return the reward based on the motion.
 
-        @param v_t: robot's current linear velocity in mm/s.
-        @param w_t: robot's current angular velocity in mm/s.
+        @param v_left: robot's left wheel speed in mm/s.
+        @param v_right: robot's right wheel speed in mm/s.
         """
 
         v_t = get_linear_velocity(v_left, v_right)
@@ -46,7 +67,9 @@ class robot:
         # Update Current position and orientation
         self.x_cur += x_dot*self.t_step
         self.y_cur += y_dot*self.t_step
-        return x_dot + y_dot
+        self.replot_robot()
+
+        return self.calculate_reward(v_l, v_r)
 
 
     def detect_collision(self, x_dot, y_dot):
@@ -55,7 +78,6 @@ class robot:
 
         @param x_dot: Robot's speed in the x direction
         @param y_dot: Robot's speed in the y direction
-        @param arena: The arena in which the robot is moving
         """
 
         collision = False
@@ -68,7 +90,7 @@ class robot:
             collision = True
 
         return collision
-    
+
 
     def get_view(self):
         """
@@ -202,7 +224,6 @@ class robot:
                             of each stripe in the view.
         @param cl: the leftmost absolute coordinate in the view.
         @param wall: visible wall number.
-        @param arena: Arena object.
         """
 
         stripes_angles = []
@@ -601,7 +622,7 @@ def get_angular_velocity(v_l, v_r, v_t, L=55):
     """
     Calculate the robot's angular velocity based on left and right
     wheels' speeds.
-    
+
     @param v_l: left wheel speed in mm/s.
     @param v_r: right wheel speed in mm/s.
     @param v_t: robot's current linear velocity in mm/s.
