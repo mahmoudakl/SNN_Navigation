@@ -32,7 +32,7 @@ class robot:
         plt.ylim(0, self.arena.maximum_length)
         plt.xticks([])
         plt.yticks([])
-        plt.plot(self.x_cur, self.y_cur, 'Dr')
+        plt.plot(self.x_cur, self.y_cur, marker=(3, 0, np.rad2deg(self.theta_cur) - 90))
         self.fig.show()
     
 
@@ -69,7 +69,7 @@ class robot:
         self.y_cur += y_dot*self.t_step
         self.replot_robot()
 
-        return self.calculate_reward(v_l, v_r)
+        return self.calculate_reward(v_left, v_right)
 
 
     def detect_collision(self, x_dot, y_dot):
@@ -157,7 +157,7 @@ class robot:
                 total_view_r = visible_wall_right[coordinate_right:]
                 cll = coordinate_left
                 if wall_left == 1:
-                    crl = arena.maximum_width()
+                    crl = self.arena.maximum_width
                 else:
                     crl = 0
             view_l_tuples = vision.breakdown_view(total_view_l)
