@@ -4,9 +4,9 @@ import arena
 import numpy as np
 import matplotlib.pyplot as plt
 
-class robot:
-    """Create a two-wheeled robot body"""
 
+class Robot:
+    """Create a two-wheeled robot body"""
 
     def __init__(self, x_init, y_init, theta_init, max_speed=40.0, t_step=0.1):
         """Create robot with initial pose"""
@@ -21,12 +21,11 @@ class robot:
         self.intersect_right = ()
         self.get_visible_wall_coordinates()
         self.fig = plt.figure()
-        self.replot_robot()
+        self.re_plot_robot()
 
+    def re_plot_robot(self):
+        """clear old robot position and re-plot the new position"""
 
-    def replot_robot(self):
-        """
-        """
         plt.clf()
         plt.xlim(0, self.arena.maximum_width)
         plt.ylim(0, self.arena.maximum_length)
@@ -34,14 +33,6 @@ class robot:
         plt.yticks([])
         plt.plot(self.x_cur, self.y_cur, marker=(3, 0, np.rad2deg(self.theta_cur) - 90))
         self.fig.show()
-    
-
-    def calculate_reward(self, v_left, v_right):
-        """
-        """
-        if v_left < 0 or v_right < 0:
-            return 0
-
 
     def move(self, v_left, v_right):
         """
@@ -49,8 +40,8 @@ class robot:
         and angular velocities of the robot, and its current position and
         orientation and return the reward based on the motion.
 
-        @param v_left: robot's left wheel speed in mm/s.
-        @param v_right: robot's right wheel speed in mm/s.
+        @param v_left: robot's left wheel speed in mm/s
+        @param v_right: robot's right wheel speed in mm/s
         """
 
         v_t = get_linear_velocity(v_left, v_right)
@@ -63,18 +54,17 @@ class robot:
         y_dot = v_t*np.sin(self.theta_cur)
         if self.detect_collision(x_dot, y_dot):
             # collision detected, robot get no reward
-            return 0
+            return -1
         # Update Current position and orientation
         self.x_cur += x_dot*self.t_step
         self.y_cur += y_dot*self.t_step
-        self.replot_robot()
+        self.re_plot_robot()
 
-        return self.calculate_reward(v_left, v_right)
-
+        return calculate_reward(v_left, v_right)
 
     def detect_collision(self, x_dot, y_dot):
         """
-        Detect if collision will occur based on the wheel speeds set.
+        Detect if collision will occur based on the wheel speeds set
 
         @param x_dot: Robot's speed in the x direction
         @param y_dot: Robot's speed in the y direction
@@ -91,18 +81,17 @@ class robot:
 
         return collision
 
-
     def get_view(self):
         """
         Extract the pixel values that the robot sees based on the visible
         wall coordinates. If multiple walls visible, stich values together,
-        neglecting projection effect.
+        neglecting projection effect
         """
 
         self.get_visible_wall_coordinates()
         view_proportion = self.get_walls_view_ratio()
         wall_dict = {1: self.arena.wall1, 2: self.arena.wall2, 3: self.arena.wall3,
-                    4: self.arena.wall4}
+                     4: self.arena.wall4}
         wall_left = self.intersect_left[0]
         wall_right = self.intersect_right[0]
 
@@ -130,8 +119,6 @@ class robot:
                 view = visible_wall_left[coordinate_left:coordinate_right]
             view_tuples = vision.breakdown_view(view)
             view_angles = self.get_stripes_angle(view_tuples, coordinate_left, wall_left)
-            #if len(view_angles) == 0:
-            #    print x, y, intersect_l, intersect_r, view_proportion
             view = vision.get_photoreceptors_values(view_angles, 64)
         # In case robot sees more than one wall
         elif view_proportion[0] == 2:
@@ -164,10 +151,6 @@ class robot:
             view_l_angles = self.get_stripes_angle(view_l_tuples, cll, wall_left)
             view_r_tuples = vision.breakdown_view(total_view_r)
             view_r_angles = self.get_stripes_angle(view_r_tuples, crl, wall_right)
-            if view_l_tuples == [] or view_r_tuples == []:
-                print intersect_l, intersect_r, view_proportion
-            if len(view_l_angles) == 0 or len(view_r_angles) == 0:
-                print x, y, intersect_l, intersect_r, view_proportion
             view_l = vision.get_photoreceptors_values(view_l_angles, receptors_l)
             view_r = vision.get_photoreceptors_values(view_r_angles, receptors_r)
             view = np.concatenate([view_l, view_r])
@@ -202,18 +185,12 @@ class robot:
             view_m_angles = self.get_stripes_angle(view_m_tuples, cml, wall_m)
             view_r_tuples = vision.breakdown_view(total_view_r)
             view_r_angles = self.get_stripes_angle(view_r_tuples, crl, wall_right)
-            if view_l_tuples == [] or view_m_tuples == []or view_r_tuples == []:
-                print intersect_l, intersect_r, view_proportion
-            if len(view_l_angles) == 0 or len(view_m_angles) == 0 or \
-                                                    len(view_r_angles) == 0:
-                print x, y, intersect_l, intersect_r, view_proportion 
             view_l = vision.get_photoreceptors_values(view_l_angles, receptors_l)
             view_m = vision.get_photoreceptors_values(view_m_angles, receptors_m)
             view_r = vision.get_photoreceptors_values(view_r_angles, receptors_r)
             view = np.concatenate([view_l, view_m, view_r])
 
         return view
-
 
     def get_stripes_angle(self, view_tuples, cl, wall):
         """
@@ -256,7 +233,6 @@ class robot:
 
         return stripes_angles
 
-
     def get_visible_wall_coordinates(self):
         """
         Calculate the visible part of the walls to the robot based on its
@@ -271,8 +247,7 @@ class robot:
         horizontal_dist = self.arena.maximum_length - self.x_cur
 
         # Robot's orientation angle lies in the first quadrant
-        if theta >= 0 and theta < np.pi/2:
-
+        if 0 <= theta < np.pi/2:
             if theta_1 == np.pi/2:
                 # Left limit is exactly 90 deg., visible is wall1
                 self.intersect_left = 1, self.x_cur
@@ -333,8 +308,7 @@ class robot:
                     self.intersect_right = 3, self.arena.maximum_length - adj
 
         # Robot's orientation angle lies in the second quadrant
-        elif theta >= np.pi/2 and theta < np.pi:
-
+        elif np.pi/2 <= theta < np.pi:
             if theta_1 == np.pi:
                 # Left limit is exactly 180 deg., visible is wall4
                 self.intersect_left = 4, self.y_cur
@@ -352,7 +326,7 @@ class robot:
                     opp = adj*np.sin(angle)/np.cos(angle)
                     self.intersect_left = 4, self.arena.maximum_width - opp
             else:
-                # Left limit excceeds 180 deg., visible may be wall3 or
+                # Left limit exceeds 180 deg., visible may be wall3 or
                 # wall4
                 angle = theta_1 - np.pi
                 opp = self.x_cur*np.sin(angle)/np.cos(angle)
@@ -396,8 +370,7 @@ class robot:
                     self.intersect_right = 2, self.arena.maximum_width - adj
 
         # Robot's orientation angle lies in the third quadrant
-        elif theta >= np.pi and theta < 3*np.pi/2:
-
+        elif np.pi <= theta < 3*np.pi/2:
             if theta_1 == 3*np.pi/2:
                 # Left limit is exactly 270 deg., visible is wall3
                 self.intersect_left = 3, self.x_cur
@@ -451,7 +424,7 @@ class robot:
                 opp = self.x_cur*np.sin(angle)/np.cos(angle)
                 if self.y_cur + opp <= self.arena.maximum_width:
                     # Right limit is on wall4
-                    intersect_right = 4, self.y_cur + opp
+                    self.intersect_right = 4, self.y_cur + opp
                 else:
                     # Right limit is on wall1
                     opp = self.y_cur + opp - arena.maximum_width
@@ -460,7 +433,6 @@ class robot:
 
         # Robot's orientation angle lies in the 4th quadrant
         elif theta >= 3*np.pi/2:
-
             if theta_1 == 2*np.pi:
                 # Left limit is exactly 360 deg., visible is wall2
                 self.intersect_left = 2, self.y_cur
@@ -478,7 +450,7 @@ class robot:
                     adj = opp*np.cos(angle)/np.sin(angle)
                     self.intersect_left = 2, adj
             else:
-                # Left limit exceedds 360 deg., visible may be wall1 or
+                # Left limit exceeds 360 deg., visible may be wall1 or
                 # wall2
                 angle = theta_1 - 2*np.pi
                 opp = horizontal_dist*np.sin(angle)/np.cos(angle)
@@ -520,7 +492,6 @@ class robot:
                     opp = opp - self.x_cur
                     adj = opp*np.cos(angle)/np.sin(angle)
                     self.intersect_right = 4, adj
-
 
     def get_walls_view_ratio(self):
         """
@@ -645,3 +616,11 @@ def get_angular_velocity(v_l, v_r, v_t, L=55):
         w_t = -v_t/float(R)
 
     return w_t
+
+
+def calculate_reward(v_left, v_right):
+    """"
+    calculate reward for reinforcement learning
+    """
+    if v_left < 0 or v_right < 0:
+        return 0
