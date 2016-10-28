@@ -16,7 +16,7 @@ class Robot:
         self.theta_cur = self.theta_prev = theta_init
         self.max_speed = max_speed
         self.t_step = t_step
-        self.arena = arena.arena(1)
+        self.arena = arena.Arena(1)
         self.intersect_left = ()
         self.intersect_right = ()
         self.get_visible_wall_coordinates()
@@ -427,7 +427,7 @@ class Robot:
                     self.intersect_right = 4, self.y_cur + opp
                 else:
                     # Right limit is on wall1
-                    opp = self.y_cur + opp - arena.maximum_width
+                    opp = self.y_cur + opp - self.arena.maximum_width
                     adj = opp*np.cos(angle)/np.sin(angle)
                     self.intersect_right = 1, adj
 
@@ -506,10 +506,8 @@ class Robot:
         wall_right = self.intersect_right[0]
 
         # View border angles
-        theta_1 = self.theta_cur + np.deg2rad(18)
-        theta_2 = abs(self.theta_cur - np.deg2rad(18))
-        theta_1 = theta_1 % (2*np.pi)
-        theta_2 = theta_2 % (2*np.pi)
+        theta_1 = (self.theta_cur + np.deg2rad(18)) % (2*np.pi)
+        theta_2 = abs(self.theta_cur - np.deg2rad(18)) % (2*np.pi)
         theta_total = np.deg2rad(36)
 
         if wall_left == wall_right:
@@ -589,7 +587,7 @@ def get_linear_velocity(v_l, v_r):
     return v_t
 
 
-def get_angular_velocity(v_l, v_r, v_t, L=55):
+def get_angular_velocity(v_l, v_r, v_t, l=55):
     """
     Calculate the robot's angular velocity based on left and right
     wheels' speeds.
@@ -597,23 +595,23 @@ def get_angular_velocity(v_l, v_r, v_t, L=55):
     @param v_l: left wheel speed in mm/s.
     @param v_r: right wheel speed in mm/s.
     @param v_t: robot's current linear velocity in mm/s.
-    @param L: distance between both wheels in mm.
+    @param l: distance between both wheels in mm.
     """
 
-    # If robot is moving in a straigh line, angular velocity is zero
+    # If robot is moving in a straight line, angular velocity is zero
     if v_l == v_r:
         w_t = 0
     # If wheels have exactly opposite speeds, robot is moving in
     # circular path with ICC on the mid-point between wheels.
     elif v_l == -v_r:
-        w_t = 2*v_r/float(L)
+        w_t = 2*v_r/float(l)
     else:
         # Instantaneous curvature radius of the robot trajectory,
         # relative to the midpoint axis.
-        R = (L/2.)*((v_l + v_r)/float(v_l - v_r))
+        r = (l/2.)*((v_l + v_r)/float(v_l - v_r))
 
         # Angular velocity of the robot
-        w_t = -v_t/float(R)
+        w_t = -v_t/float(r)
 
     return w_t
 

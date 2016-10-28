@@ -6,10 +6,10 @@ Created on Sat Jul 18 08:38:23 2015
 @author: akl
 """
 import numpy as np
-    
-class arena:
-    """Create arena object."""
 
+
+class Arena:
+    """Create arena object."""
 
     def __init__(self, arena_id):
         """Load wall images of the corresponding arena."""
